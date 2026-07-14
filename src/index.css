@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-background: oklch(0.985 0.002 247);
+  --color-foreground: oklch(0.145 0.02 260);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.145 0.02 260);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.145 0.02 260);
+  --color-primary: oklch(0.55 0.18 240);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-secondary: oklch(0.96 0.005 260);
+  --color-secondary-foreground: oklch(0.25 0.02 260);
+  --color-muted: oklch(0.96 0.005 260);
+  --color-muted-foreground: oklch(0.5 0.02 260);
+  --color-accent: oklch(0.94 0.01 240);
+  --color-accent-foreground: oklch(0.25 0.02 260);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-border: oklch(0.91 0.005 260);
+  --color-input: oklch(0.91 0.005 260);
+  --color-ring: oklch(0.55 0.18 240);
+  --color-visited: oklch(0.62 0.17 145);
+  --color-wishlist: oklch(0.55 0.18 240);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+.dark {
+  --color-background: oklch(0.14 0.015 260);
+  --color-foreground: oklch(0.96 0.005 260);
+  --color-card: oklch(0.18 0.015 260);
+  --color-card-foreground: oklch(0.96 0.005 260);
+  --color-popover: oklch(0.18 0.015 260);
+  --color-popover-foreground: oklch(0.96 0.005 260);
+  --color-primary: oklch(0.65 0.18 240);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-secondary: oklch(0.22 0.015 260);
+  --color-secondary-foreground: oklch(0.96 0.005 260);
+  --color-muted: oklch(0.22 0.015 260);
+  --color-muted-foreground: oklch(0.65 0.02 260);
+  --color-accent: oklch(0.24 0.02 260);
+  --color-accent-foreground: oklch(0.96 0.005 260);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-border: oklch(0.28 0.015 260);
+  --color-input: oklch(0.28 0.015 260);
+  --color-ring: oklch(0.65 0.18 240);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    margin: 0;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+}
+
+.leaflet-container {
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  background: var(--color-muted);
+  z-index: 0;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  opacity: 0.6;
+}
+
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+@keyframes marker-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.marker-animate {
+  animation: marker-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.01 260);
+  border-radius: 999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.015 260);
+}

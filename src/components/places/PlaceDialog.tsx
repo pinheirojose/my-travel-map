@@ -1,0 +1,203 @@
+import { useState, useEffect } from 'react'
+import type { GeocodedLocation, Place, PlaceCategory, PlaceDraft, PlaceStatus } from '@/types'
+import { PLACE_CATEGORIES, PLACE_STATUSES } from '@/types'
+import { CATEGORY_CONFIG, STATUS_CONFIG } from '@/utils/constants'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Loader2, MapPin } from 'lucide-react'
+
+interface PlaceDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  location: GeocodedLocation | null
+  place?: Place | null
+  isLoading?: boolean
+  onSave: (draft: PlaceDraft) => void
+}
+
+const defaultDraft = (location: GeocodedLocation): PlaceDraft => ({
+  name: location.name,
+  status: 'visited',
+  category: 'city',
+  country: location.country,
+  countryCode: location.countryCode,
+  region: location.region,
+  city: location.city,
+  latitude: location.latitude,
+  longitude: location.longitude,
+  notes: '',
+  visitedDate: null,
+})
+
+export function PlaceDialog({
+  open,
+  onOpenChange,
+  location,
+  place,
+  isLoading,
+  onSave,
+}: PlaceDialogProps) {
+  const [draft, setDraft] = useState<PlaceDraft | null>(null)
+
+  useEffect(() => {
+    if (place) {
+      setDraft({
+        name: place.name,
+        status: place.status,
+        category: place.category,
+        country: place.country,
+        countryCode: place.countryCode,
+        region: place.region,
+        city: place.city,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        notes: place.notes,
+        visitedDate: place.visitedDate,
+      })
+    } else if (location) {
+      setDraft(defaultDraft(location))
+    }
+  }, [location, place, open])
+
+  const handleSave = () => {
+    if (!draft?.name.trim()) return
+    onSave(draft)
+    onOpenChange(false)
+  }
+
+  const update = <K extends keyof PlaceDraft>(key: K, value: PlaceDraft[K]) => {
+    setDraft((prev) => (prev ? { ...prev, [key]: value } : prev))
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{place ? 'Edit Place' : 'Add Place'}</DialogTitle>
+          <DialogDescription>
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Looking up location...
+              </span>
+            ) : draft ? (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" />
+                {[draft.city, draft.region, draft.country].filter(Boolean).join(', ') ||
+                  `${draft.latitude.toFixed(4)}, ${draft.longitude.toFixed(4)}`}
+              </span>
+            ) : null}
+          </DialogDescription>
+        </DialogHeader>
+
+        {draft && !isLoading && (
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={draft.name}
+                onChange={(e) => update('name', e.target.value)}
+                placeholder="Place name"
+                autoFocus
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Status</Label>
+                <Select
+                  value={draft.status}
+                  onValueChange={(v) => update('status', v as PlaceStatus)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLACE_STATUSES.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: STATUS_CONFIG[status].color }}
+                          />
+                          {STATUS_CONFIG[status].label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Category</Label>
+                <Select
+                  value={draft.category}
+                  onValueChange={(v) => update('category', v as PlaceCategory)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLACE_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {CATEGORY_CONFIG[cat].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="visitedDate">Visited Date (optional)</Label>
+              <Input
+                id="visitedDate"
+                type="date"
+                value={draft.visitedDate ?? ''}
+                onChange={(e) => update('visitedDate', e.target.value || null)}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Notes (optional)</Label>
+              <Textarea
+                id="notes"
+                value={draft.notes}
+                onChange={(e) => update('notes', e.target.value)}
+                placeholder="Memories, tips, or plans..."
+                rows={3}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={!draft?.name.trim() || isLoading}>
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
