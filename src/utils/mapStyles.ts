@@ -90,6 +90,26 @@ export const MAP_STYLES: MapStyleDefinition[] = [
     decorative: true,
   },
   {
+    id: 'vintage_map',
+    name: 'Vintage Map',
+    emoji: '🗺️',
+    description: 'Antique cartography with warm parchment tones and classic detailing.',
+    // Esri NatGeo tiles use z/y/x ordering.
+    tileUrl:
+      'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
+    tileAttribution: '&copy; Esri &amp; National Geographic',
+    exportBackground: '#efe2c9',
+    exportTextColor: '#3b2a1a',
+    exportAccentColor: '#8b5a2b',
+    exportSecondaryColor: '#6b5344',
+    exportLegendBg: 'rgba(250, 241, 222, 0.95)',
+    exportTitleFont: '"Playfair Display", Georgia, serif',
+    exportBodyFont: '"Inter", sans-serif',
+    markerVisitedColor: '#8b3a2a',
+    markerWishlistColor: '#2f5d50',
+    decorative: true,
+  },
+  {
     id: 'modern_minimal',
     name: 'Modern Minimal',
     emoji: '📍',

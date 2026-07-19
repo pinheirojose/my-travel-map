@@ -74,6 +74,7 @@ export type MapStyleId =
   | 'watercolor'
   | 'dark_mode'
   | 'vintage_poster'
+  | 'vintage_map'
   | 'modern_minimal'
 
 export interface MapStyleDefinition {
