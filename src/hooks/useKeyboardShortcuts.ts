@@ -3,6 +3,7 @@ import { useTravelMapStore } from '@/store/travelMapStore'
 
 interface KeyboardShortcutsOptions {
   onAddPlace: () => void
+  onAddPlaceEscape?: () => void
   onExport: () => void
   onToggleSidebar: () => void
   onToggleDarkMode: () => void
@@ -10,6 +11,7 @@ interface KeyboardShortcutsOptions {
 
 export function useKeyboardShortcuts({
   onAddPlace,
+  onAddPlaceEscape,
   onExport,
   onToggleSidebar,
   onToggleDarkMode,
@@ -46,10 +48,12 @@ export function useKeyboardShortcuts({
         undoDelete()
       } else if (e.key === 'Escape') {
         useTravelMapStore.getState().setSelectedPlaceId(null)
+        onAddPlaceEscape?.()
       }
     },
     [
       onAddPlace,
+      onAddPlaceEscape,
       onExport,
       onToggleSidebar,
       onToggleDarkMode,

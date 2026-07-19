@@ -17,6 +17,8 @@ interface WorldMapProps {
   onEditPlace: (place: Place) => void
   onDeletePlace: (id: string) => void
   addMode: boolean
+  flyToTarget?: { lat: number; lng: number; zoom?: number } | null
+  onFlyToComplete?: () => void
 }
 
 function MapEventHandler({
@@ -47,7 +49,13 @@ function MapEventHandler({
   return null
 }
 
-function MapController() {
+function MapController({
+  flyToTarget,
+  onFlyToComplete,
+}: {
+  flyToTarget?: { lat: number; lng: number; zoom?: number } | null
+  onFlyToComplete?: () => void
+}) {
   const map = useMap()
   const selectedPlaceId = useTravelMapStore((s) => s.selectedPlaceId)
   const places = useTravelMapStore((s) => s.places)
@@ -66,6 +74,24 @@ function MapController() {
       })
     }
   }, [selectedPlaceId, places, map])
+
+  const lastFlyKey = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!flyToTarget) {
+      lastFlyKey.current = null
+      return
+    }
+    const key = `${flyToTarget.lat},${flyToTarget.lng},${flyToTarget.zoom ?? 12}`
+    if (lastFlyKey.current === key) return
+    lastFlyKey.current = key
+    map.flyTo(
+      [flyToTarget.lat, flyToTarget.lng],
+      flyToTarget.zoom ?? 12,
+      { duration: 1 },
+    )
+    onFlyToComplete?.()
+  }, [flyToTarget, map, onFlyToComplete])
 
   return null
 }
@@ -93,6 +119,8 @@ export function WorldMap({
   onEditPlace,
   onDeletePlace,
   addMode,
+  flyToTarget,
+  onFlyToComplete,
 }: WorldMapProps) {
   const places = useTravelMapStore((s) => s.places)
   const mapViewport = useTravelMapStore((s) => s.mapViewport)
@@ -129,7 +157,10 @@ export function WorldMap({
         maxZoom={19}
       />
       <MapEventHandler onMapClick={onMapClick} addMode={addMode} />
-      <MapController />
+      <MapController
+        flyToTarget={flyToTarget}
+        onFlyToComplete={onFlyToComplete}
+      />
       <CursorStyle addMode={addMode} />
 
       {places.map((place) => (

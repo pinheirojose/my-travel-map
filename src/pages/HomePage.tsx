@@ -8,6 +8,7 @@ import { useTravelStats } from '@/hooks/usePlaces'
 import { Toolbar } from '@/components/toolbar/Toolbar'
 import { TravelSidebar } from '@/components/sidebar/TravelSidebar'
 import { PlaceDialog } from '@/components/places/PlaceDialog'
+import { AddPlaceChooser } from '@/components/places/AddPlaceChooser'
 import { ExportModal, SupportModal } from '@/components/export/ExportModals'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ClientOnly } from '@/components/ClientOnly'
@@ -23,9 +24,11 @@ import { getMapStyle } from '@/utils/mapStyles'
 import { downloadBlob, readFileAsText } from '@/utils'
 import { SUPPORT_MODAL_INTERVAL } from '@/utils/constants'
 import type { GeocodedLocation, Place, PlaceDraft } from '@/types'
+import type { PlaceSearchResult } from '@/services/geocoding'
 
 export function HomePage() {
   const [addMode, setAddMode] = useState(false)
+  const [addChooserOpen, setAddChooserOpen] = useState(false)
   const [placeDialogOpen, setPlaceDialogOpen] = useState(false)
   const [exportModalOpen, setExportModalOpen] = useState(false)
   const [supportModalOpen, setSupportModalOpen] = useState(false)
@@ -34,7 +37,20 @@ export function HomePage() {
   const [isExporting, setIsExporting] = useState(false)
   const [pendingLocation, setPendingLocation] = useState<GeocodedLocation | null>(null)
   const [editingPlace, setEditingPlace] = useState<Place | null>(null)
+  const [flyToTarget, setFlyToTarget] = useState<{
+    lat: number
+    lng: number
+    zoom?: number
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const openAddChooser = useCallback(() => {
+    if (addMode) {
+      setAddMode(false)
+      return
+    }
+    setAddChooserOpen(true)
+  }, [addMode])
 
   const places = useTravelMapStore((s) => s.places)
   const mapViewport = useTravelMapStore((s) => s.mapViewport)
@@ -68,6 +84,22 @@ export function HomePage() {
     } finally {
       setIsGeocoding(false)
     }
+  }, [])
+
+  const handleSearchResult = useCallback((result: PlaceSearchResult) => {
+    setAddMode(false)
+    setEditingPlace(null)
+    setPendingLocation(result)
+    setPlaceDialogOpen(true)
+    setFlyToTarget({
+      lat: result.latitude,
+      lng: result.longitude,
+      zoom: 13,
+    })
+  }, [])
+
+  const clearFlyToTarget = useCallback(() => {
+    setFlyToTarget(null)
   }, [])
 
   const handleSavePlace = useCallback(
@@ -192,7 +224,8 @@ export function HomePage() {
   )
 
   useKeyboardShortcuts({
-    onAddPlace: () => setAddMode((m) => !m),
+    onAddPlace: openAddChooser,
+    onAddPlaceEscape: () => setAddMode(false),
     onExport: initiateDownload,
     onToggleSidebar: () => setSidebarOpen(!preferences.sidebarOpen),
     onToggleDarkMode: toggleDarkMode,
@@ -203,7 +236,7 @@ export function HomePage() {
       <Toolbar
         darkMode={darkMode}
         addMode={addMode}
-        onAddPlace={() => setAddMode((m) => !m)}
+        onAddPlace={openAddChooser}
         onReset={() => setResetDialogOpen(true)}
         onDownload={initiateDownload}
         onExportJson={handleExportJson}
@@ -220,6 +253,8 @@ export function HomePage() {
               onEditPlace={handleEditPlace}
               onDeletePlace={handleDeletePlace}
               addMode={addMode}
+              flyToTarget={flyToTarget}
+              onFlyToComplete={clearFlyToTarget}
             />
           </ClientOnly>
 
@@ -230,6 +265,13 @@ export function HomePage() {
               className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg"
             >
               Click on the map to add a place
+              <button
+                type="button"
+                onClick={() => setAddMode(false)}
+                className="ml-3 underline underline-offset-2 opacity-90 hover:opacity-100 cursor-pointer"
+              >
+                Cancel
+              </button>
             </motion.div>
           )}
         </main>
@@ -239,6 +281,13 @@ export function HomePage() {
           onClose={() => setSidebarOpen(false)}
         />
       </div>
+
+      <AddPlaceChooser
+        open={addChooserOpen}
+        onOpenChange={setAddChooserOpen}
+        onChooseMapClick={() => setAddMode(true)}
+        onSelectSearchResult={handleSearchResult}
+      />
 
       <PlaceDialog
         open={placeDialogOpen}

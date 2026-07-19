@@ -105,3 +105,57 @@ export function createFallbackLocation(
     longitude,
   }
 }
+
+export interface PlaceSearchResult extends GeocodedLocation {
+  displayName: string
+}
+
+function toGeocodedLocation(result: NominatimResult): PlaceSearchResult {
+  const address = result.address ?? {}
+  const latitude = Number.parseFloat(result.lat)
+  const longitude = Number.parseFloat(result.lon)
+
+  return {
+    name: extractName(result, address),
+    city: extractCity(address),
+    region: extractRegion(address),
+    country: address.country ?? '',
+    countryCode: (address.country_code ?? '').toUpperCase(),
+    latitude,
+    longitude,
+    displayName: result.display_name,
+  }
+}
+
+/** Forward-geocode a place name via Nominatim (e.g. "Eiffel Tower, Paris"). */
+export async function searchPlaces(
+  query: string,
+  limit = 6,
+): Promise<PlaceSearchResult[]> {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+
+  const url = new URL('https://nominatim.openstreetmap.org/search')
+  url.searchParams.set('format', 'json')
+  url.searchParams.set('q', trimmed)
+  url.searchParams.set('addressdetails', '1')
+  url.searchParams.set('limit', String(limit))
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: 'application/json',
+      'Accept-Language': 'en',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to search for places')
+  }
+
+  const results = (await response.json()) as NominatimResult[]
+  return results
+    .map(toGeocodedLocation)
+    .filter(
+      (r) => Number.isFinite(r.latitude) && Number.isFinite(r.longitude),
+    )
+}
