@@ -20,8 +20,14 @@ const CATEGORY_EMOJI: Record<string, string> = {
   other: '📌',
 }
 
-function createIconSvg(place: Place, animate: boolean): string {
-  const statusColor = STATUS_CONFIG[place.status].color
+function createIconSvg(
+  place: Place,
+  animate: boolean,
+  visitedColor: string,
+  wishlistColor: string,
+): string {
+  const statusColor =
+    place.status === 'visited' ? visitedColor : wishlistColor
   const emoji = CATEGORY_EMOJI[place.category] ?? '📌'
 
   return `
@@ -40,10 +46,17 @@ function createIconSvg(place: Place, animate: boolean): string {
   `
 }
 
-export function createPlaceIcon(place: Place, animate = false): L.DivIcon {
+export function createPlaceIcon(
+  place: Place,
+  animate = false,
+  colors?: { visited: string; wishlist: string },
+): L.DivIcon {
+  const visitedColor = colors?.visited ?? STATUS_CONFIG.visited.color
+  const wishlistColor = colors?.wishlist ?? STATUS_CONFIG.wishlist.color
+
   return L.divIcon({
     className: 'custom-marker',
-    html: createIconSvg(place, animate),
+    html: createIconSvg(place, animate, visitedColor, wishlistColor),
     iconSize: [36, 36],
     iconAnchor: [18, 18],
     popupAnchor: [0, -20],

@@ -125,7 +125,8 @@ export function ExportModal({
         <DialogHeader>
           <DialogTitle>Download Printable Map</DialogTitle>
           <DialogDescription>
-            Choose a visual style for your high-resolution travel map export.
+            Choose a visual style for your export. This also updates the live map
+            while you browse and mark places.
           </DialogDescription>
         </DialogHeader>
 

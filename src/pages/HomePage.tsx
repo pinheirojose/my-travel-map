@@ -13,6 +13,7 @@ import { ExportModal, SupportModal } from '@/components/export/ExportModals'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ClientOnly } from '@/components/ClientOnly'
 import { WorldMap } from '@/components/map/WorldMap'
+import { MapStylePicker } from '@/components/map/MapStylePicker'
 import { reverseGeocode, createFallbackLocation } from '@/services/geocoding'
 import {
   generatePrintableMap,
@@ -257,6 +258,10 @@ export function HomePage() {
               onFlyToComplete={clearFlyToTarget}
             />
           </ClientOnly>
+
+          <div className="absolute bottom-4 left-4 z-[1000]">
+            <MapStylePicker variant="map" />
+          </div>
 
           {addMode && (
             <motion.div

@@ -1,8 +1,9 @@
 import L from 'leaflet'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Marker, Popup, Tooltip } from 'react-leaflet'
 import type { Place } from '@/types'
 import { useTravelMapStore } from '@/store/travelMapStore'
+import { getMapStyle } from '@/utils/mapStyles'
 import { createPlaceIcon } from './PlaceMarker'
 import { PlacePopup } from './PlacePopup'
 
@@ -25,6 +26,24 @@ export function PlaceMarkerComponent({
 }: PlaceMarkerProps) {
   const markerRef = useRef<L.Marker>(null)
   const clearRecentlyAdded = useTravelMapStore((s) => s.clearRecentlyAdded)
+  const selectedMapStyle = useTravelMapStore(
+    (s) => s.preferences.selectedMapStyle,
+  )
+  const style = getMapStyle(selectedMapStyle)
+
+  const icon = useMemo(
+    () =>
+      createPlaceIcon(place, isNew, {
+        visited: style.markerVisitedColor,
+        wishlist: style.markerWishlistColor,
+      }),
+    [
+      place,
+      isNew,
+      style.markerVisitedColor,
+      style.markerWishlistColor,
+    ],
+  )
 
   useEffect(() => {
     if (isSelected && markerRef.current) {
@@ -43,7 +62,7 @@ export function PlaceMarkerComponent({
     <Marker
       ref={markerRef}
       position={[place.latitude, place.longitude]}
-      icon={createPlaceIcon(place, isNew)}
+      icon={icon}
       eventHandlers={{
         click: () => onSelect(place.id),
       }}

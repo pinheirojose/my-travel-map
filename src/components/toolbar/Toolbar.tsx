@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { MapStylePicker } from '@/components/map/MapStylePicker'
 import { cn } from '@/utils'
 
 interface ToolbarProps {
@@ -64,6 +65,8 @@ export function Toolbar({
             <MapPinPlus className="h-4 w-4" />
             <span className="hidden lg:inline text-xs">Add Place</span>
           </ToolbarButton>
+
+          <MapStylePicker variant="toolbar" />
         </div>
 
         <div className="flex items-center gap-1">

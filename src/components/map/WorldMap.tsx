@@ -151,6 +151,7 @@ export function WorldMap({
     >
       <ZoomControl position="bottomright" />
       <TileLayer
+        key={style.id}
         attribution={style.tileAttribution}
         url={style.tileUrl}
         subdomains="abcd"
