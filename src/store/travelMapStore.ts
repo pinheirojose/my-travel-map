@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type {
+  AppLocale,
   MapStyleId,
   MapViewport,
   Place,
@@ -10,6 +11,7 @@ import type {
   SortOption,
 } from '@/types'
 import { DEFAULT_MAP_VIEWPORT, STORAGE_KEY } from '@/utils/constants'
+import { detectBrowserLocale } from '@/i18n'
 import { generateId } from '@/utils'
 
 interface TravelMapStore {
@@ -21,6 +23,7 @@ interface TravelMapStore {
     downloadCount: number
     selectedMapStyle: MapStyleId
     sidebarOpen: boolean
+    locale: AppLocale
   }
   selectedPlaceId: string | null
   sidebarFilters: SidebarFilters
@@ -40,6 +43,7 @@ interface TravelMapStore {
   toggleDarkMode: () => void
   setSidebarOpen: (open: boolean) => void
   setSelectedMapStyle: (style: MapStyleId) => void
+  setLocale: (locale: AppLocale) => void
   incrementDownloadCount: () => number
   setHideSupportModal: (hide: boolean) => void
 
@@ -71,6 +75,7 @@ export const useTravelMapStore = create<TravelMapStore>()(
         downloadCount: 0,
         selectedMapStyle: 'classic_atlas',
         sidebarOpen: false,
+        locale: detectBrowserLocale(),
       },
       selectedPlaceId: null,
       sidebarFilters: defaultFilters,
@@ -167,6 +172,11 @@ export const useTravelMapStore = create<TravelMapStore>()(
           preferences: { ...state.preferences, selectedMapStyle: style },
         })),
 
+      setLocale: (locale) =>
+        set((state) => ({
+          preferences: { ...state.preferences, locale },
+        })),
+
       incrementDownloadCount: () => {
         const count = get().preferences.downloadCount + 1
         set((state) => ({
@@ -219,6 +229,22 @@ export const useTravelMapStore = create<TravelMapStore>()(
         sidebarFilters: state.sidebarFilters,
       }),
       storage: createJSONStorage(() => localStorage),
+      merge: (persisted, current) => {
+        const persistedState = (persisted ?? {}) as Partial<TravelMapStore>
+        const persistedPrefs = persistedState.preferences
+        return {
+          ...current,
+          ...persistedState,
+          preferences: {
+            ...current.preferences,
+            ...persistedPrefs,
+            locale:
+              persistedPrefs?.locale ??
+              current.preferences.locale ??
+              detectBrowserLocale(),
+          },
+        }
+      },
     },
   ),
 )

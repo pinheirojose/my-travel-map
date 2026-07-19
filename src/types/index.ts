@@ -111,12 +111,15 @@ export interface SupportLinks {
   stripe?: string
 }
 
+export type AppLocale = 'en' | 'pt-PT'
+
 export interface AppPreferences {
   darkMode: boolean
   hideSupportModal: boolean
   downloadCount: number
   selectedMapStyle: MapStyleId
   sidebarOpen: boolean
+  locale: AppLocale
 }
 
 export interface TravelMapState {

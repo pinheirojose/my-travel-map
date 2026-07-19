@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Marker, Popup, Tooltip } from 'react-leaflet'
 import type { Place } from '@/types'
 import { useTravelMapStore } from '@/store/travelMapStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import { getMapStyle } from '@/utils/mapStyles'
 import { createPlaceIcon } from './PlaceMarker'
 import { PlacePopup } from './PlacePopup'
@@ -24,6 +25,7 @@ export function PlaceMarkerComponent({
   onEdit,
   onDelete,
 }: PlaceMarkerProps) {
+  const { t } = useTranslation()
   const markerRef = useRef<L.Marker>(null)
   const clearRecentlyAdded = useTravelMapStore((s) => s.clearRecentlyAdded)
   const selectedMapStyle = useTravelMapStore(
@@ -71,8 +73,8 @@ export function PlaceMarkerComponent({
         <div className="text-xs">
           <p className="font-semibold">{place.name}</p>
           {place.country && <p className="text-muted-foreground">{place.country}</p>}
-          <p className="text-muted-foreground capitalize">
-            {place.category.replace(/_/g, ' ')} · {place.status}
+          <p className="text-muted-foreground">
+            {t(`category.${place.category}`)} · {t(`status.${place.status}`)}
           </p>
         </div>
       </Tooltip>

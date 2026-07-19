@@ -14,25 +14,23 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useTravelMapStore } from '@/store/travelMapStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import type { MapStyleId } from '@/types'
 import { MAP_STYLES, getMapStyle } from '@/utils/mapStyles'
 import { cn } from '@/utils'
 
 interface MapStylePickerProps {
-  /** Compact toolbar control vs larger map overlay control */
   variant?: 'toolbar' | 'map'
 }
 
 export function MapStylePicker({ variant = 'toolbar' }: MapStylePickerProps) {
+  const { t } = useTranslation()
   const selectedMapStyle = useTravelMapStore(
     (s) => s.preferences.selectedMapStyle,
   )
   const setSelectedMapStyle = useTravelMapStore((s) => s.setSelectedMapStyle)
   const current = getMapStyle(selectedMapStyle)
-
-  const selectStyle = (id: MapStyleId) => {
-    setSelectedMapStyle(id)
-  }
+  const currentName = t(`mapStyles.${current.id}.name`)
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -48,21 +46,23 @@ export function MapStylePicker({ variant = 'toolbar' }: MapStylePickerProps) {
                   variant === 'map' &&
                     'shadow-md border border-border/80 bg-card/95 backdrop-blur-sm',
                 )}
-                aria-label="Map style"
+                aria-label={t('toolbar.mapStyle')}
               >
                 {variant === 'toolbar' ? (
                   <>
                     <span className="text-sm leading-none" aria-hidden>
                       {current.emoji}
                     </span>
-                    <span className="hidden lg:inline text-xs">Map Style</span>
+                    <span className="hidden lg:inline text-xs">
+                      {t('toolbar.mapStyle')}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Layers className="h-4 w-4" />
                     <span className="text-xs">{current.emoji}</span>
                     <span className="hidden sm:inline text-xs max-w-[9rem] truncate">
-                      {current.name}
+                      {currentName}
                     </span>
                   </>
                 )}
@@ -70,13 +70,15 @@ export function MapStylePicker({ variant = 'toolbar' }: MapStylePickerProps) {
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>Map style — {current.name}</p>
+            <p>
+              {t('toolbar.mapStyleTooltip')} — {currentName}
+            </p>
           </TooltipContent>
         </Tooltip>
 
         <DropdownMenuContent align="start" className="w-72 p-2">
           <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
-            Map style
+            {t('toolbar.mapStyle')}
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="my-1" />
           <div className="grid gap-1">
@@ -86,7 +88,7 @@ export function MapStylePicker({ variant = 'toolbar' }: MapStylePickerProps) {
                 <button
                   key={style.id}
                   type="button"
-                  onClick={() => selectStyle(style.id)}
+                  onClick={() => setSelectedMapStyle(style.id as MapStyleId)}
                   className={cn(
                     'flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition-colors cursor-pointer',
                     selected
@@ -106,14 +108,14 @@ export function MapStylePicker({ variant = 'toolbar' }: MapStylePickerProps) {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium leading-tight">
-                        {style.name}
+                        {t(`mapStyles.${style.id}.name`)}
                       </span>
                       {selected && (
                         <Check className="h-4 w-4 shrink-0 text-primary" />
                       )}
                     </span>
                     <span className="mt-0.5 block text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                      {style.description}
+                      {t(`mapStyles.${style.id}.description`)}
                     </span>
                   </span>
                 </button>

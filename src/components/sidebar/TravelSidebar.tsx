@@ -9,6 +9,7 @@ import {
 import { useState } from 'react'
 import { useTravelMapStore } from '@/store/travelMapStore'
 import { useGroupedPlaces, useTravelStats } from '@/hooks/usePlaces'
+import { useTranslation } from '@/hooks/useTranslation'
 import { getUniqueCountries } from '@/services/places'
 import { CATEGORY_CONFIG, STATUS_CONFIG } from '@/utils/constants'
 import { PLACE_CATEGORIES, PLACE_STATUSES } from '@/types'
@@ -37,6 +38,7 @@ interface SidebarProps {
 }
 
 export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
+  const { t } = useTranslation()
   const places = useTravelMapStore((s) => s.places)
   const filters = useTravelMapStore((s) => s.sidebarFilters)
   const selectedPlaceId = useTravelMapStore((s) => s.selectedPlaceId)
@@ -67,12 +69,13 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-tight">Travel Places</h2>
+          <h2 className="text-lg font-semibold tracking-tight">{t('sidebar.title')}</h2>
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden h-8 w-8"
             onClick={onClose}
+            aria-label={t('common.close')}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -81,7 +84,7 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search places..."
+            placeholder={t('sidebar.searchPlaceholder')}
             value={filters.search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8"
@@ -91,13 +94,13 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
         <div className="grid grid-cols-2 gap-2">
           <Select value={filters.status} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t('sidebar.status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="all">{t('sidebar.allStatuses')}</SelectItem>
               {PLACE_STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {STATUS_CONFIG[s].label}
+                  {t(`status.${s}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -105,13 +108,13 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
 
           <Select value={filters.category} onValueChange={setCategoryFilter}>
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t('sidebar.category')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">{t('sidebar.allCategories')}</SelectItem>
               {PLACE_CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {CATEGORY_CONFIG[c].label}
+                  {t(`category.${c}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -119,10 +122,10 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
 
           <Select value={filters.country} onValueChange={setCountryFilter}>
             <SelectTrigger className="h-8 text-xs col-span-2">
-              <SelectValue placeholder="Country" />
+              <SelectValue placeholder={t('sidebar.country')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Countries</SelectItem>
+              <SelectItem value="all">{t('sidebar.allCountries')}</SelectItem>
               {countries.map((c) => (
                 <SelectItem key={c.code} value={c.code}>
                   {countryCodeToFlag(c.code)} {c.name}
@@ -133,12 +136,18 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
 
           <Select value={filters.sort} onValueChange={setSort}>
             <SelectTrigger className="h-8 text-xs col-span-2">
-              <SelectValue placeholder="Sort" />
+              <SelectValue placeholder={t('sidebar.sort')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recently_added">Recently Added</SelectItem>
-              <SelectItem value="alphabetical">Alphabetical</SelectItem>
-              <SelectItem value="visited_date">Visited Date</SelectItem>
+              <SelectItem value="recently_added">
+                {t('sidebar.sortRecentlyAdded')}
+              </SelectItem>
+              <SelectItem value="alphabetical">
+                {t('sidebar.sortAlphabetical')}
+              </SelectItem>
+              <SelectItem value="visited_date">
+                {t('sidebar.sortVisitedDate')}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -163,7 +172,7 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
                   )}
                   <span className="text-base">{countryCodeToFlag(group.countryCode)}</span>
                   <span className="font-medium text-sm flex-1 text-left truncate">
-                    {group.country}
+                    {group.country || t('sidebar.unknownCountry')}
                   </span>
                   <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                     {group.places.length}
@@ -215,11 +224,11 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
       <div className="border-t border-border p-4 space-y-2">
         <Separator className="mb-3" />
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-          <Stat label="Total Places" value={stats.totalPlaces} />
-          <Stat label="Visited" value={stats.visitedPlaces} />
-          <Stat label="Wishlist" value={stats.wishlistPlaces} />
-          <Stat label="Countries Visited" value={stats.countriesVisited} />
-          <Stat label="Countries Wishlist" value={stats.countriesWishlist} />
+          <Stat label={t('sidebar.totalPlaces')} value={stats.totalPlaces} />
+          <Stat label={t('sidebar.visited')} value={stats.visitedPlaces} />
+          <Stat label={t('sidebar.wishlist')} value={stats.wishlistPlaces} />
+          <Stat label={t('sidebar.countriesVisited')} value={stats.countriesVisited} />
+          <Stat label={t('sidebar.countriesWishlist')} value={stats.countriesWishlist} />
         </div>
       </div>
     </div>
@@ -227,12 +236,10 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-[25%] min-w-[280px] max-w-[400px] border-l border-border bg-card h-full">
         {sidebarContent}
       </aside>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -269,18 +276,17 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function EmptyState({ hasPlaces }: { hasPlaces: boolean }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
         <MapPin className="h-6 w-6 text-muted-foreground" />
       </div>
       <p className="text-sm font-medium">
-        {hasPlaces ? 'No matching places' : 'No places yet'}
+        {hasPlaces ? t('sidebar.emptyFilteredTitle') : t('sidebar.emptyTitle')}
       </p>
       <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">
-        {hasPlaces
-          ? 'Try adjusting your filters'
-          : 'Click anywhere on the map to add your first destination'}
+        {hasPlaces ? t('sidebar.emptyFilteredHint') : t('sidebar.emptyHint')}
       </p>
     </div>
   )

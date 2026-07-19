@@ -55,9 +55,15 @@ function extractName(result: NominatimResult, address: NominatimAddress): string
   return parts[0]?.trim() ?? 'Unknown Place'
 }
 
+function acceptLanguage(locale?: string): string {
+  if (locale?.startsWith('pt')) return 'pt-PT,pt;q=0.9,en;q=0.8'
+  return 'en'
+}
+
 export async function reverseGeocode(
   latitude: number,
   longitude: number,
+  locale?: string,
 ): Promise<GeocodedLocation> {
   const url = new URL('https://nominatim.openstreetmap.org/reverse')
   url.searchParams.set('format', 'json')
@@ -69,7 +75,7 @@ export async function reverseGeocode(
   const response = await fetch(url.toString(), {
     headers: {
       Accept: 'application/json',
-      'Accept-Language': 'en',
+      'Accept-Language': acceptLanguage(locale),
     },
   })
 
@@ -131,6 +137,7 @@ function toGeocodedLocation(result: NominatimResult): PlaceSearchResult {
 export async function searchPlaces(
   query: string,
   limit = 6,
+  locale?: string,
 ): Promise<PlaceSearchResult[]> {
   const trimmed = query.trim()
   if (!trimmed) return []
@@ -144,7 +151,7 @@ export async function searchPlaces(
   const response = await fetch(url.toString(), {
     headers: {
       Accept: 'application/json',
-      'Accept-Language': 'en',
+      'Accept-Language': acceptLanguage(locale),
     },
   })
 

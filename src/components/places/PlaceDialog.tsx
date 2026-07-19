@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import type { GeocodedLocation, Place, PlaceCategory, PlaceDraft, PlaceStatus } from '@/types'
 import { PLACE_CATEGORIES, PLACE_STATUSES } from '@/types'
-import { CATEGORY_CONFIG, STATUS_CONFIG } from '@/utils/constants'
+import { STATUS_CONFIG } from '@/utils/constants'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,7 @@ export function PlaceDialog({
   isLoading,
   onSave,
 }: PlaceDialogProps) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState<PlaceDraft | null>(null)
 
   useEffect(() => {
@@ -90,12 +92,14 @@ export function PlaceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{place ? 'Edit Place' : 'Add Place'}</DialogTitle>
+          <DialogTitle>
+            {place ? t('placeDialog.editTitle') : t('placeDialog.addTitle')}
+          </DialogTitle>
           <DialogDescription>
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Looking up location...
+                {t('placeDialog.lookingUp')}
               </span>
             ) : draft ? (
               <span className="flex items-center gap-1.5">
@@ -110,19 +114,19 @@ export function PlaceDialog({
         {draft && !isLoading && (
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t('placeDialog.name')}</Label>
               <Input
                 id="name"
                 value={draft.name}
                 onChange={(e) => update('name', e.target.value)}
-                placeholder="Place name"
+                placeholder={t('placeDialog.namePlaceholder')}
                 autoFocus
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label>Status</Label>
+                <Label>{t('placeDialog.status')}</Label>
                 <Select
                   value={draft.status}
                   onValueChange={(v) => update('status', v as PlaceStatus)}
@@ -138,7 +142,7 @@ export function PlaceDialog({
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: STATUS_CONFIG[status].color }}
                           />
-                          {STATUS_CONFIG[status].label}
+                          {t(`status.${status}`)}
                         </span>
                       </SelectItem>
                     ))}
@@ -147,7 +151,7 @@ export function PlaceDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label>Category</Label>
+                <Label>{t('placeDialog.category')}</Label>
                 <Select
                   value={draft.category}
                   onValueChange={(v) => update('category', v as PlaceCategory)}
@@ -158,7 +162,7 @@ export function PlaceDialog({
                   <SelectContent>
                     {PLACE_CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>
-                        {CATEGORY_CONFIG[cat].label}
+                        {t(`category.${cat}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -167,7 +171,7 @@ export function PlaceDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="visitedDate">Visited Date (optional)</Label>
+              <Label htmlFor="visitedDate">{t('placeDialog.visitedDate')}</Label>
               <Input
                 id="visitedDate"
                 type="date"
@@ -177,12 +181,12 @@ export function PlaceDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes">{t('placeDialog.notes')}</Label>
               <Textarea
                 id="notes"
                 value={draft.notes}
                 onChange={(e) => update('notes', e.target.value)}
-                placeholder="Memories, tips, or plans..."
+                placeholder={t('placeDialog.notesPlaceholder')}
                 rows={3}
               />
             </div>
@@ -191,10 +195,10 @@ export function PlaceDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('placeDialog.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={!draft?.name.trim() || isLoading}>
-            Save
+            {t('placeDialog.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

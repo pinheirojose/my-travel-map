@@ -3,6 +3,7 @@ import type { Place } from '@/types'
 import { CATEGORY_CONFIG, STATUS_CONFIG } from '@/utils/constants'
 import { formatCoordinates, formatDate } from '@/utils'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface PlacePopupProps {
   place: Place
@@ -11,6 +12,7 @@ interface PlacePopupProps {
 }
 
 export function PlacePopup({ place, onEdit, onDelete }: PlacePopupProps) {
+  const { t } = useTranslation()
   const CategoryIcon = CATEGORY_CONFIG[place.category].icon
   const statusConfig = STATUS_CONFIG[place.status]
 
@@ -20,7 +22,7 @@ export function PlacePopup({ place, onEdit, onDelete }: PlacePopupProps) {
         <h3 className="font-semibold text-base leading-tight">{place.name}</h3>
         <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
           <CategoryIcon className="h-3.5 w-3.5" />
-          <span>{CATEGORY_CONFIG[place.category].label}</span>
+          <span>{t(`category.${place.category}`)}</span>
           <span>·</span>
           <span
             className="inline-flex items-center gap-1"
@@ -30,7 +32,7 @@ export function PlacePopup({ place, onEdit, onDelete }: PlacePopupProps) {
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: statusConfig.color }}
             />
-            {statusConfig.label}
+            {t(`status.${place.status}`)}
           </span>
         </div>
       </div>
@@ -60,7 +62,7 @@ export function PlacePopup({ place, onEdit, onDelete }: PlacePopupProps) {
       <div className="flex gap-1.5 pt-1">
         <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={onEdit}>
           <Pencil className="h-3 w-3" />
-          Edit
+          {t('placePopup.edit')}
         </Button>
         <Button
           size="sm"

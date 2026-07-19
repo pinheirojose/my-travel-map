@@ -1,5 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { detectBrowserLocale, getMessages } from '@/i18n'
+import type { Locale } from '@/i18n'
+import { STORAGE_KEY } from '@/utils/constants'
 
 interface Props {
   children: ReactNode
@@ -7,6 +10,19 @@ interface Props {
 
 interface State {
   error: Error | null
+}
+
+function readStoredLocale(): Locale {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return detectBrowserLocale()
+    const parsed = JSON.parse(raw) as {
+      state?: { preferences?: { locale?: Locale } }
+    }
+    return parsed.state?.preferences?.locale ?? detectBrowserLocale()
+  } catch {
+    return detectBrowserLocale()
+  }
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -22,12 +38,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
+      const messages = getMessages(readStoredLocale())
       return (
         <div className="flex min-h-dvh items-center justify-center bg-background p-6">
           <div className="max-w-md space-y-4 text-center">
-            <h1 className="text-xl font-semibold">Something went wrong</h1>
+            <h1 className="text-xl font-semibold">{messages.error.title}</h1>
             <p className="text-sm text-muted-foreground">
-              The app hit an unexpected error. Try clearing saved data and reloading.
+              {messages.error.description}
             </p>
             <pre className="rounded-lg bg-muted p-3 text-left text-xs overflow-auto max-h-32">
               {this.state.error.message}
@@ -36,13 +53,15 @@ export class ErrorBoundary extends Component<Props, State> {
               <Button
                 variant="outline"
                 onClick={() => {
-                  localStorage.removeItem('travel-map-storage-v1')
+                  localStorage.removeItem(STORAGE_KEY)
                   window.location.reload()
                 }}
               >
-                Clear data & reload
+                {messages.error.clearAndReload}
               </Button>
-              <Button onClick={() => window.location.reload()}>Reload</Button>
+              <Button onClick={() => window.location.reload()}>
+                {messages.error.reload}
+              </Button>
             </div>
           </div>
         </div>

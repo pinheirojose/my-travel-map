@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import type { MapStyleId } from '@/types'
 import { SUPPORT_LINKS } from '@/utils/constants'
 import { MAP_STYLES } from '@/utils/mapStyles'
+import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/utils'
 
 interface SupportModalProps {
@@ -29,6 +30,7 @@ export function SupportModal({
   onSkip,
   onDontShowAgain,
 }: SupportModalProps) {
+  const { t } = useTranslation()
   const [dontShow, setDontShow] = useState(false)
 
   const handleSkip = () => {
@@ -52,16 +54,14 @@ export function SupportModal({
             <Heart className="h-8 w-8 text-rose-500 fill-rose-500/20" />
           </motion.div>
           <DialogTitle className="text-center text-xl">
-            ❤️ Support Travel Map
+            {t('support.title')}
           </DialogTitle>
           <DialogDescription className="text-center leading-relaxed pt-2">
-            If you enjoy using Travel Map and would like to help keep the project
-            free and continuously improving, consider supporting its development.
+            {t('support.message1')}
             <br /><br />
-            Your contribution helps fund new features, map improvements and
-            long-term maintenance.
+            {t('support.message2')}
             <br /><br />
-            Supporting the project is completely optional, but greatly appreciated.
+            {t('support.message3')}
           </DialogDescription>
         </DialogHeader>
 
@@ -70,20 +70,20 @@ export function SupportModal({
             className="w-full bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black font-medium"
             onClick={() => window.open(SUPPORT_LINKS.buyMeACoffee, '_blank')}
           >
-            ❤️ Buy Me a Coffee
+            {t('support.buyMeACoffee')}
           </Button>
           <Button
             className="w-full bg-emerald-600 hover:bg-emerald-600/90 text-white font-medium"
             onClick={() => window.open(SUPPORT_LINKS.kofi, '_blank')}
           >
-            💚 Contribute
+            {t('support.contribute')}
           </Button>
           <Button
             variant="ghost"
             className="w-full text-muted-foreground"
             onClick={handleSkip}
           >
-            Skip and Download
+            {t('support.skip')}
           </Button>
         </div>
 
@@ -94,7 +94,7 @@ export function SupportModal({
             onCheckedChange={(checked) => setDontShow(checked === true)}
           />
           <Label htmlFor="dont-show" className="text-xs text-muted-foreground cursor-pointer">
-            Don't show this again
+            {t('support.dontShowAgain')}
           </Label>
         </div>
       </DialogContent>
@@ -119,15 +119,15 @@ export function ExportModal({
   onDownload,
   isExporting,
 }: ExportModalProps) {
+  const { t } = useTranslation()
+  const selected = MAP_STYLES.find((s) => s.id === selectedStyle)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Download Printable Map</DialogTitle>
-          <DialogDescription>
-            Choose a visual style for your export. This also updates the live map
-            while you browse and mark places.
-          </DialogDescription>
+          <DialogTitle>{t('export.title')}</DialogTitle>
+          <DialogDescription>{t('export.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-2">
@@ -143,9 +143,11 @@ export function ExportModal({
               )}
             >
               <span className="text-2xl mb-1">{style.emoji}</span>
-              <span className="text-sm font-medium leading-tight">{style.name}</span>
+              <span className="text-sm font-medium leading-tight">
+                {t(`mapStyles.${style.id}.name`)}
+              </span>
               <span className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
-                {style.description}
+                {t(`mapStyles.${style.id}.description`)}
               </span>
               <div
                 className="absolute top-2 right-2 w-6 h-6 rounded-full border border-white/50 shadow-sm"
@@ -160,57 +162,45 @@ export function ExportModal({
         <div
           className="rounded-xl border border-border p-6 text-center"
           style={{
-            background: MAP_STYLES.find((s) => s.id === selectedStyle)?.exportBackground,
-            color: MAP_STYLES.find((s) => s.id === selectedStyle)?.exportTextColor,
+            background: selected?.exportBackground,
+            color: selected?.exportTextColor,
           }}
         >
           <p
             className="text-2xl font-bold mb-1"
-            style={{
-              fontFamily: MAP_STYLES.find((s) => s.id === selectedStyle)?.exportTitleFont,
-            }}
+            style={{ fontFamily: selected?.exportTitleFont }}
           >
-            My Travel Map
+            {t('export.mapTitle')}
           </p>
-          <p className="text-sm opacity-70">Preview of selected style</p>
+          <p className="text-sm opacity-70">{t('export.previewLabel')}</p>
           <div className="flex justify-center gap-4 mt-3 text-xs">
             <span className="flex items-center gap-1">
               <span
                 className="w-2.5 h-2.5 rounded-full"
-                style={{
-                  backgroundColor: MAP_STYLES.find((s) => s.id === selectedStyle)
-                    ?.markerVisitedColor,
-                }}
+                style={{ backgroundColor: selected?.markerVisitedColor }}
               />
-              Visited
+              {t('export.visited')}
             </span>
             <span className="flex items-center gap-1">
               <span
                 className="w-2.5 h-2.5 rounded-full"
-                style={{
-                  backgroundColor: MAP_STYLES.find((s) => s.id === selectedStyle)
-                    ?.markerWishlistColor,
-                }}
+                style={{ backgroundColor: selected?.markerWishlistColor }}
               />
-              Wishlist
+              {t('export.wishlist')}
             </span>
           </div>
         </div>
 
-        <Button
-          className="w-full"
-          onClick={onDownload}
-          disabled={isExporting}
-        >
+        <Button className="w-full" onClick={onDownload} disabled={isExporting}>
           {isExporting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generating high-resolution map...
+              {t('export.generating')}
             </>
           ) : (
             <>
               <Download className="h-4 w-4" />
-              Download PNG
+              {t('export.downloadPng')}
             </>
           )}
         </Button>

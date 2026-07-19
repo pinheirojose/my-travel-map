@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { useTravelMapStore } from '@/store/travelMapStore'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useTravelStats } from '@/hooks/usePlaces'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Toolbar } from '@/components/toolbar/Toolbar'
 import { TravelSidebar } from '@/components/sidebar/TravelSidebar'
 import { PlaceDialog } from '@/components/places/PlaceDialog'
@@ -69,6 +70,11 @@ export function HomePage() {
 
   const { darkMode, toggleDarkMode } = useDarkMode()
   const stats = useTravelStats()
+  const { t, locale } = useTranslation()
+
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
 
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
     setPlaceDialogOpen(true)
@@ -77,15 +83,15 @@ export function HomePage() {
     setPendingLocation(null)
 
     try {
-      const location = await reverseGeocode(lat, lng)
+      const location = await reverseGeocode(lat, lng, locale)
       setPendingLocation(location)
     } catch {
       setPendingLocation(createFallbackLocation(lat, lng))
-      toast.error('Could not look up location details')
+      toast.error(t('toast.geocodeFailed'))
     } finally {
       setIsGeocoding(false)
     }
-  }, [])
+  }, [locale, t])
 
   const handleSearchResult = useCallback((result: PlaceSearchResult) => {
     setAddMode(false)
@@ -107,16 +113,16 @@ export function HomePage() {
     (draft: PlaceDraft) => {
       if (editingPlace) {
         updatePlace(editingPlace.id, draft)
-        toast.success('Place updated')
+        toast.success(t('toast.placeUpdated'))
       } else {
         addPlace(draft)
-        toast.success('Place added to your map')
+        toast.success(t('toast.placeAdded'))
         setAddMode(false)
       }
       setEditingPlace(null)
       setPendingLocation(null)
     },
-    [editingPlace, addPlace, updatePlace],
+    [editingPlace, addPlace, updatePlace, t],
   )
 
   const handleEditPlace = useCallback((place: Place) => {
@@ -130,18 +136,18 @@ export function HomePage() {
       const deleted = deletePlace(id)
       if (deleted) {
         toast.success(
-          (t) => (
+          (toastItem) => (
             <span className="flex items-center gap-2">
-              {deleted.name} deleted
+              {deleted.name} {t('toast.placeDeleted')}
               <button
                 onClick={() => {
                   undoDelete()
-                  toast.dismiss(t.id)
-                  toast.success('Place restored')
+                  toast.dismiss(toastItem.id)
+                  toast.success(t('toast.placeRestored'))
                 }}
                 className="underline font-medium cursor-pointer"
               >
-                Undo
+                {t('toast.undo')}
               </button>
             </span>
           ),
@@ -149,7 +155,7 @@ export function HomePage() {
         )
       }
     },
-    [deletePlace, undoDelete],
+    [deletePlace, undoDelete, t],
   )
 
   const initiateDownload = useCallback(() => {
@@ -173,17 +179,28 @@ export function HomePage() {
     setIsExporting(true)
     try {
       const style = getMapStyle(preferences.selectedMapStyle)
-      const blob = await generatePrintableMap(places, style, stats)
+      const blob = await generatePrintableMap(places, style, stats, {
+        mapTitle: t('export.mapTitle'),
+        legend: t('export.legend'),
+        summary: t('export.summary'),
+        visited: t('export.visited'),
+        wishlist: t('export.wishlist'),
+        totalPlaces: t('export.totalPlaces'),
+        visitedCount: t('export.visitedCount'),
+        wishlistCount: t('export.wishlistCount'),
+        countriesVisited: t('export.countriesVisited'),
+        generated: t('export.generated'),
+      })
       downloadBlob(blob, buildExportFilename())
       incrementDownloadCount()
       setExportModalOpen(false)
-      toast.success('Map downloaded successfully!')
+      toast.success(t('toast.mapDownloaded'))
     } catch {
-      toast.error('Failed to generate map. Please try again.')
+      toast.error(t('toast.mapGenerateFailed'))
     } finally {
       setIsExporting(false)
     }
-  }, [places, preferences.selectedMapStyle, stats, incrementDownloadCount])
+  }, [places, preferences.selectedMapStyle, stats, incrementDownloadCount, t])
 
   const handleExportJson = useCallback(() => {
     const data = buildJsonExport(places, mapViewport, {
@@ -196,8 +213,8 @@ export function HomePage() {
       type: 'application/json',
     })
     downloadBlob(blob, `travel-map-export-${new Date().toISOString().slice(0, 10)}.json`)
-    toast.success('Data exported')
-  }, [places, mapViewport, preferences])
+    toast.success(t('toast.dataExported'))
+  }, [places, mapViewport, preferences, t])
 
   const handleImportJson = useCallback(() => {
     fileInputRef.current?.click()
@@ -211,17 +228,17 @@ export function HomePage() {
         const text = await readFileAsText(file)
         const data = JSON.parse(text)
         if (!validateJsonImport(data)) {
-          toast.error('Invalid import file format')
+          toast.error(t('toast.invalidImport'))
           return
         }
         importData(data.places, data.mapViewport)
-        toast.success(`Imported ${data.places.length} places`)
+        toast.success(t('toast.imported', { count: data.places.length }))
       } catch {
-        toast.error('Failed to import file')
+        toast.error(t('toast.importFailed'))
       }
       e.target.value = ''
     },
-    [importData],
+    [importData, t],
   )
 
   useKeyboardShortcuts({
@@ -269,13 +286,13 @@ export function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg"
             >
-              Click on the map to add a place
+              {t('addPlace.mapHint')}
               <button
                 type="button"
                 onClick={() => setAddMode(false)}
                 className="ml-3 underline underline-offset-2 opacity-90 hover:opacity-100 cursor-pointer"
               >
-                Cancel
+                {t('addPlace.cancel')}
               </button>
             </motion.div>
           )}
@@ -328,13 +345,13 @@ export function HomePage() {
       <ConfirmDialog
         open={resetDialogOpen}
         onOpenChange={setResetDialogOpen}
-        title="Reset All Data"
-        description="This will permanently delete all your places and reset the map. This action cannot be undone."
-        confirmLabel="Reset Everything"
+        title={t('confirm.resetTitle')}
+        description={t('confirm.resetDescription')}
+        confirmLabel={t('confirm.resetConfirm')}
         destructive
         onConfirm={() => {
           resetAll()
-          toast.success('All data has been reset')
+          toast.success(t('toast.resetDone'))
         }}
       />
 

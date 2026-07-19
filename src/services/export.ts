@@ -317,10 +317,37 @@ async function drawMarker(
   ctx.drawImage(img, x - size / 2, y - size / 2, size, size)
 }
 
+export interface ExportLabels {
+  mapTitle: string
+  legend: string
+  summary: string
+  visited: string
+  wishlist: string
+  totalPlaces: string
+  visitedCount: string
+  wishlistCount: string
+  countriesVisited: string
+  generated: string
+}
+
+const DEFAULT_EXPORT_LABELS: ExportLabels = {
+  mapTitle: 'My Travel Map',
+  legend: 'Legend',
+  summary: 'Summary',
+  visited: 'Visited',
+  wishlist: 'Wishlist',
+  totalPlaces: 'Total Places',
+  visitedCount: 'Visited',
+  wishlistCount: 'Wishlist',
+  countriesVisited: 'Countries Visited',
+  generated: 'Generated',
+}
+
 export async function generatePrintableMap(
   places: Place[],
   style: MapStyleDefinition,
   stats: TravelStats,
+  labels: ExportLabels = DEFAULT_EXPORT_LABELS,
 ): Promise<Blob> {
   const canvas = document.createElement('canvas')
   canvas.width = EXPORT_WIDTH
@@ -378,7 +405,7 @@ export async function generatePrintableMap(
   ctx.fillStyle = style.exportTextColor
   ctx.font = `700 72px ${style.exportTitleFont}`
   ctx.textAlign = 'center'
-  ctx.fillText('My Travel Map', EXPORT_WIDTH / 2, 100)
+  ctx.fillText(labels.mapTitle, EXPORT_WIDTH / 2, 100)
 
   const legendY = EXPORT_HEIGHT - 260
   const legendX = 100
@@ -396,7 +423,7 @@ export async function generatePrintableMap(
   ctx.font = `600 28px ${style.exportBodyFont}`
   ctx.textAlign = 'left'
   ctx.fillStyle = style.exportTextColor
-  ctx.fillText('Legend', legendX + 24, legendY + 40)
+  ctx.fillText(labels.legend, legendX + 24, legendY + 40)
 
   ctx.font = `400 24px ${style.exportBodyFont}`
   ctx.beginPath()
@@ -404,14 +431,14 @@ export async function generatePrintableMap(
   ctx.fillStyle = style.markerVisitedColor
   ctx.fill()
   ctx.fillStyle = style.exportSecondaryColor
-  ctx.fillText('Visited', legendX + 56, legendY + 80)
+  ctx.fillText(labels.visited, legendX + 56, legendY + 80)
 
   ctx.beginPath()
   ctx.arc(legendX + 36, legendY + 112, 10, 0, Math.PI * 2)
   ctx.fillStyle = style.markerWishlistColor
   ctx.fill()
   ctx.fillStyle = style.exportSecondaryColor
-  ctx.fillText('Wishlist', legendX + 56, legendY + 120)
+  ctx.fillText(labels.wishlist, legendX + 56, legendY + 120)
 
   const summaryX = legendX + legendWidth + 40
   const summaryWidth = 500
@@ -425,15 +452,15 @@ export async function generatePrintableMap(
 
   ctx.font = `600 28px ${style.exportBodyFont}`
   ctx.fillStyle = style.exportTextColor
-  ctx.fillText('Summary', summaryX + 24, legendY + 40)
+  ctx.fillText(labels.summary, summaryX + 24, legendY + 40)
 
   ctx.font = `400 22px ${style.exportBodyFont}`
   ctx.fillStyle = style.exportSecondaryColor
   const summaryLines = [
-    `Total Places: ${stats.totalPlaces}`,
-    `Visited: ${stats.visitedPlaces}`,
-    `Wishlist: ${stats.wishlistPlaces}`,
-    `Countries Visited: ${stats.countriesVisited}`,
+    `${labels.totalPlaces}: ${stats.totalPlaces}`,
+    `${labels.visitedCount}: ${stats.visitedPlaces}`,
+    `${labels.wishlistCount}: ${stats.wishlistPlaces}`,
+    `${labels.countriesVisited}: ${stats.countriesVisited}`,
   ]
   summaryLines.forEach((line, i) => {
     ctx.fillText(line, summaryX + 24, legendY + 76 + i * 32)
@@ -447,7 +474,7 @@ export async function generatePrintableMap(
     month: 'long',
     day: 'numeric',
   }).format(new Date())
-  ctx.fillText(`Generated ${dateStr}`, EXPORT_WIDTH - 100, EXPORT_HEIGHT - 40)
+  ctx.fillText(`${labels.generated} ${dateStr}`, EXPORT_WIDTH - 100, EXPORT_HEIGHT - 40)
 
   if (style.decorative) {
     ctx.strokeStyle = style.exportAccentColor

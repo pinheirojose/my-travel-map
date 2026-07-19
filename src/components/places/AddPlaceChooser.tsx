@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { searchPlaces, type PlaceSearchResult } from '@/services/geocoding'
+import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/utils'
 
 type Step = 'choose' | 'search'
@@ -27,6 +28,7 @@ export function AddPlaceChooser({
   onChooseMapClick,
   onSelectSearchResult,
 }: AddPlaceChooserProps) {
+  const { t, locale } = useTranslation()
   const [step, setStep] = useState<Step>('choose')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PlaceSearchResult[]>([])
@@ -68,7 +70,7 @@ export function AddPlaceChooser({
     setError(null)
 
     try {
-      const found = await searchPlaces(trimmed)
+      const found = await searchPlaces(trimmed, 6, locale)
       if (id !== requestId.current) return
       setResults(found)
       setHasSearched(true)
@@ -76,7 +78,7 @@ export function AddPlaceChooser({
       if (id !== requestId.current) return
       setResults([])
       setHasSearched(true)
-      setError('Could not search right now. Please try again.')
+      setError(t('addPlace.searchError'))
     } finally {
       if (id === requestId.current) setIsSearching(false)
     }
@@ -92,12 +94,12 @@ export function AddPlaceChooser({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {step === 'choose' ? 'Add a Place' : 'Search for a Place'}
+            {step === 'choose' ? t('addPlace.title') : t('addPlace.searchTitle')}
           </DialogTitle>
           <DialogDescription>
             {step === 'choose'
-              ? 'How would you like to add your next destination?'
-              : 'Try something like “Eiffel Tower, Paris” or “Tokyo, Japan”.'}
+              ? t('addPlace.chooseDescription')
+              : t('addPlace.searchDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -118,9 +120,11 @@ export function AddPlaceChooser({
                 <MousePointerClick className="h-5 w-5" />
               </span>
               <span>
-                <span className="block text-sm font-semibold">Click on map</span>
+                <span className="block text-sm font-semibold">
+                  {t('addPlace.clickOnMap')}
+                </span>
                 <span className="mt-0.5 block text-xs text-muted-foreground leading-relaxed">
-                  Point anywhere on the world map to drop a pin and fill in the details.
+                  {t('addPlace.clickOnMapHint')}
                 </span>
               </span>
             </button>
@@ -137,9 +141,9 @@ export function AddPlaceChooser({
                 <Search className="h-5 w-5" />
               </span>
               <span>
-                <span className="block text-sm font-semibold">Search</span>
+                <span className="block text-sm font-semibold">{t('addPlace.search')}</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground leading-relaxed">
-                  Look up a landmark, city, or address — for example “Eiffel Tower, Paris”.
+                  {t('addPlace.searchHint')}
                 </span>
               </span>
             </button>
@@ -153,13 +157,17 @@ export function AddPlaceChooser({
                   ref={inputRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Eiffel Tower, Paris"
+                  placeholder={t('addPlace.searchPlaceholder')}
                   className="pl-8"
                   autoComplete="off"
                 />
               </div>
               <Button type="submit" disabled={isSearching || !query.trim()}>
-                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
+                {isSearching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  t('addPlace.searchButton')
+                )}
               </Button>
             </form>
 
@@ -167,7 +175,7 @@ export function AddPlaceChooser({
               {isSearching && (
                 <div className="flex h-[180px] items-center justify-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Searching…
+                  {t('addPlace.searching')}
                 </div>
               )}
 
@@ -181,14 +189,14 @@ export function AddPlaceChooser({
                 <div className="flex h-[180px] flex-col items-center justify-center gap-2 px-4 text-center">
                   <MapPin className="h-5 w-5 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    Search for a place to add it to your map
+                    {t('addPlace.searchPrompt')}
                   </p>
                 </div>
               )}
 
               {!isSearching && !error && hasSearched && results.length === 0 && (
                 <div className="flex h-[180px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                  No places found. Try a more specific name.
+                  {t('addPlace.noResults')}
                 </div>
               )}
 
@@ -232,7 +240,7 @@ export function AddPlaceChooser({
                 setHasSearched(false)
               }}
             >
-              Back to options
+              {t('addPlace.back')}
             </Button>
           </div>
         )}

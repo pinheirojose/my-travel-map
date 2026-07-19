@@ -16,6 +16,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { MapStylePicker } from '@/components/map/MapStylePicker'
+import { LanguageSwitcher } from '@/components/toolbar/LanguageSwitcher'
+import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/utils'
 
 interface ToolbarProps {
@@ -41,6 +43,8 @@ export function Toolbar({
   onToggleDarkMode,
   onToggleSidebar,
 }: ToolbarProps) {
+  const { t } = useTranslation()
+
   return (
     <TooltipProvider delayDuration={300}>
       <header className="flex items-center justify-between px-3 py-2 border-b border-border bg-card/80 backdrop-blur-md shrink-0 z-10">
@@ -51,46 +55,61 @@ export function Toolbar({
             </div>
             <div className="hidden sm:block">
               <h1 className="text-sm font-semibold tracking-tight leading-none">
-                Travel Map
+                {t('app.name')}
               </h1>
-              <p className="text-[10px] text-muted-foreground">Your personal journey</p>
+              <p className="text-[10px] text-muted-foreground">{t('app.tagline')}</p>
             </div>
           </div>
 
           <ToolbarButton
-            tooltip="Add Place (⌘N)"
+            tooltip={t('toolbar.addPlaceTooltip')}
             onClick={onAddPlace}
             active={addMode}
           >
             <MapPinPlus className="h-4 w-4" />
-            <span className="hidden lg:inline text-xs">Add Place</span>
+            <span className="hidden lg:inline text-xs">{t('toolbar.addPlace')}</span>
           </ToolbarButton>
 
           <MapStylePicker variant="toolbar" />
         </div>
 
         <div className="flex items-center gap-1">
-          <ToolbarButton tooltip="Download Map (⌘E)" onClick={onDownload}>
+          <ToolbarButton
+            tooltip={t('toolbar.downloadTooltip')}
+            onClick={onDownload}
+          >
             <Download className="h-4 w-4" />
-            <span className="hidden lg:inline text-xs">Download</span>
-          </ToolbarButton>
-
-          <ToolbarButton tooltip="Export JSON" onClick={onExportJson}>
-            <FileJson className="h-4 w-4" />
-            <span className="hidden xl:inline text-xs">Export</span>
-          </ToolbarButton>
-
-          <ToolbarButton tooltip="Import JSON" onClick={onImportJson}>
-            <Upload className="h-4 w-4" />
-            <span className="hidden xl:inline text-xs">Import</span>
-          </ToolbarButton>
-
-          <ToolbarButton tooltip="Reset All" onClick={onReset} variant="ghost">
-            <RotateCcw className="h-4 w-4" />
+            <span className="hidden lg:inline text-xs">{t('toolbar.download')}</span>
           </ToolbarButton>
 
           <ToolbarButton
-            tooltip={`${darkMode ? 'Light' : 'Dark'} Mode (⌘D)`}
+            tooltip={t('toolbar.exportTooltip')}
+            onClick={onExportJson}
+          >
+            <FileJson className="h-4 w-4" />
+            <span className="hidden xl:inline text-xs">{t('toolbar.export')}</span>
+          </ToolbarButton>
+
+          <ToolbarButton
+            tooltip={t('toolbar.importTooltip')}
+            onClick={onImportJson}
+          >
+            <Upload className="h-4 w-4" />
+            <span className="hidden xl:inline text-xs">{t('toolbar.import')}</span>
+          </ToolbarButton>
+
+          <ToolbarButton
+            tooltip={t('toolbar.reset')}
+            onClick={onReset}
+            variant="ghost"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </ToolbarButton>
+
+          <LanguageSwitcher />
+
+          <ToolbarButton
+            tooltip={darkMode ? t('toolbar.lightMode') : t('toolbar.darkMode')}
             onClick={onToggleDarkMode}
             variant="ghost"
           >
@@ -98,7 +117,7 @@ export function Toolbar({
           </ToolbarButton>
 
           <ToolbarButton
-            tooltip="Places (⌘B)"
+            tooltip={t('toolbar.places')}
             onClick={onToggleSidebar}
             className="md:hidden"
           >
