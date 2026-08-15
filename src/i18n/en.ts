@@ -44,6 +44,8 @@ const en: Messages = {
     wishlist: 'Wishlist',
     countriesVisited: 'Countries Visited',
     countriesWishlist: 'Countries Wishlist',
+    continentsVisited: 'Continents Visited',
+    worldVisitedPercent: 'World Visited',
     emptyTitle: 'No places yet',
     emptyFilteredTitle: 'No matching places',
     emptyHint: 'Click anywhere on the map to add your first destination',
@@ -153,6 +155,8 @@ const en: Messages = {
     visitedCount: 'Visited',
     wishlistCount: 'Wishlist',
     countriesVisited: 'Countries Visited',
+    continentsVisited: 'Continents Visited',
+    worldVisitedPercent: 'World Visited',
     generated: 'Generated',
   },
   support: {

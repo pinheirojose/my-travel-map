@@ -189,6 +189,8 @@ export function HomePage() {
         visitedCount: t('export.visitedCount'),
         wishlistCount: t('export.wishlistCount'),
         countriesVisited: t('export.countriesVisited'),
+        continentsVisited: t('export.continentsVisited'),
+        worldVisitedPercent: t('export.worldVisitedPercent'),
         generated: t('export.generated'),
       })
       downloadBlob(blob, buildExportFilename())

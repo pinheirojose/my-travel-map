@@ -102,6 +102,8 @@ export interface TravelStats {
   wishlistPlaces: number
   countriesVisited: number
   countriesWishlist: number
+  continentsVisited: number
+  worldVisitedPercent: number
 }
 
 export interface SupportLinks {

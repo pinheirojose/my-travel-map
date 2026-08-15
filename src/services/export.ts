@@ -327,6 +327,8 @@ export interface ExportLabels {
   visitedCount: string
   wishlistCount: string
   countriesVisited: string
+  continentsVisited: string
+  worldVisitedPercent: string
   generated: string
 }
 
@@ -340,6 +342,8 @@ const DEFAULT_EXPORT_LABELS: ExportLabels = {
   visitedCount: 'Visited',
   wishlistCount: 'Wishlist',
   countriesVisited: 'Countries Visited',
+  continentsVisited: 'Continents Visited',
+  worldVisitedPercent: 'World Visited',
   generated: 'Generated',
 }
 
@@ -409,7 +413,7 @@ export async function generatePrintableMap(
 
   const legendY = EXPORT_HEIGHT - 260
   const legendX = 100
-  const legendWidth = 420
+  const legendWidth = 360
   const legendHeight = 180
 
   ctx.fillStyle = style.exportLegendBg
@@ -427,43 +431,60 @@ export async function generatePrintableMap(
 
   ctx.font = `400 24px ${style.exportBodyFont}`
   ctx.beginPath()
-  ctx.arc(legendX + 36, legendY + 72, 10, 0, Math.PI * 2)
+  ctx.arc(legendX + 36, legendY + 78, 10, 0, Math.PI * 2)
   ctx.fillStyle = style.markerVisitedColor
   ctx.fill()
   ctx.fillStyle = style.exportSecondaryColor
-  ctx.fillText(labels.visited, legendX + 56, legendY + 80)
+  ctx.fillText(labels.visited, legendX + 56, legendY + 86)
 
   ctx.beginPath()
-  ctx.arc(legendX + 36, legendY + 112, 10, 0, Math.PI * 2)
+  ctx.arc(legendX + 36, legendY + 122, 10, 0, Math.PI * 2)
   ctx.fillStyle = style.markerWishlistColor
   ctx.fill()
   ctx.fillStyle = style.exportSecondaryColor
-  ctx.fillText(labels.wishlist, legendX + 56, legendY + 120)
+  ctx.fillText(labels.wishlist, legendX + 56, legendY + 130)
 
-  const summaryX = legendX + legendWidth + 40
-  const summaryWidth = 500
+  // Travel coverage stats — three featured cards
+  const statsStartX = legendX + legendWidth + 32
+  const statsGap = 24
+  const statsWidth =
+    (EXPORT_WIDTH - statsStartX - 100 - statsGap * 2) / 3
+  const statsHeight = legendHeight
 
-  ctx.fillStyle = style.exportLegendBg
-  ctx.beginPath()
-  ctx.roundRect(summaryX, legendY, summaryWidth, legendHeight, 16)
-  ctx.fill()
-  ctx.strokeStyle = style.exportAccentColor
-  ctx.stroke()
-
-  ctx.font = `600 28px ${style.exportBodyFont}`
-  ctx.fillStyle = style.exportTextColor
-  ctx.fillText(labels.summary, summaryX + 24, legendY + 40)
-
-  ctx.font = `400 22px ${style.exportBodyFont}`
-  ctx.fillStyle = style.exportSecondaryColor
-  const summaryLines = [
-    `${labels.totalPlaces}: ${stats.totalPlaces}`,
-    `${labels.visitedCount}: ${stats.visitedPlaces}`,
-    `${labels.wishlistCount}: ${stats.wishlistPlaces}`,
-    `${labels.countriesVisited}: ${stats.countriesVisited}`,
+  const featuredStats: Array<{ value: string; label: string }> = [
+    {
+      value: `${stats.worldVisitedPercent}%`,
+      label: labels.worldVisitedPercent,
+    },
+    {
+      value: String(stats.countriesVisited),
+      label: labels.countriesVisited,
+    },
+    {
+      value: String(stats.continentsVisited),
+      label: labels.continentsVisited,
+    },
   ]
-  summaryLines.forEach((line, i) => {
-    ctx.fillText(line, summaryX + 24, legendY + 76 + i * 32)
+
+  featuredStats.forEach((stat, index) => {
+    const x = statsStartX + index * (statsWidth + statsGap)
+
+    ctx.fillStyle = style.exportLegendBg
+    ctx.beginPath()
+    ctx.roundRect(x, legendY, statsWidth, statsHeight, 16)
+    ctx.fill()
+    ctx.strokeStyle = style.exportAccentColor
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.textAlign = 'center'
+    ctx.fillStyle = style.exportTextColor
+    ctx.font = `700 56px ${style.exportTitleFont}`
+    ctx.fillText(stat.value, x + statsWidth / 2, legendY + 88)
+
+    ctx.fillStyle = style.exportSecondaryColor
+    ctx.font = `500 22px ${style.exportBodyFont}`
+    ctx.fillText(stat.label, x + statsWidth / 2, legendY + 132)
   })
 
   ctx.font = `400 18px ${style.exportBodyFont}`

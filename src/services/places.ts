@@ -1,14 +1,24 @@
 import type { Place, PlaceStatus, TravelStats } from '@/types'
+import {
+  computeWorldVisitedPercent,
+  getContinentForCountryCode,
+} from '@/utils/continents'
 
 export function computeStats(places: Place[]): TravelStats {
   const visited = places.filter((p) => p.status === 'visited')
   const wishlist = places.filter((p) => p.status === 'wishlist')
 
   const visitedCountries = new Set(
-    visited.filter((p) => p.countryCode).map((p) => p.countryCode),
+    visited.filter((p) => p.countryCode).map((p) => p.countryCode.toUpperCase()),
   )
   const wishlistCountries = new Set(
-    wishlist.filter((p) => p.countryCode).map((p) => p.countryCode),
+    wishlist.filter((p) => p.countryCode).map((p) => p.countryCode.toUpperCase()),
+  )
+
+  const continents = new Set(
+    [...visitedCountries]
+      .map((code) => getContinentForCountryCode(code))
+      .filter((c): c is NonNullable<typeof c> => c !== null),
   )
 
   return {
@@ -17,6 +27,8 @@ export function computeStats(places: Place[]): TravelStats {
     wishlistPlaces: wishlist.length,
     countriesVisited: visitedCountries.size,
     countriesWishlist: wishlistCountries.size,
+    continentsVisited: continents.size,
+    worldVisitedPercent: computeWorldVisitedPercent(visitedCountries.size),
   }
 }
 

@@ -228,6 +228,11 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
           <Stat label={t('sidebar.visited')} value={stats.visitedPlaces} />
           <Stat label={t('sidebar.wishlist')} value={stats.wishlistPlaces} />
           <Stat label={t('sidebar.countriesVisited')} value={stats.countriesVisited} />
+          <Stat label={t('sidebar.continentsVisited')} value={stats.continentsVisited} />
+          <Stat
+            label={t('sidebar.worldVisitedPercent')}
+            value={`${stats.worldVisitedPercent}%`}
+          />
           <Stat label={t('sidebar.countriesWishlist')} value={stats.countriesWishlist} />
         </div>
       </div>
@@ -266,9 +271,9 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
   )
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between gap-2">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium tabular-nums">{value}</span>
     </div>

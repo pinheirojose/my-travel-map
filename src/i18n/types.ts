@@ -51,6 +51,8 @@ export type Messages = {
     wishlist: string
     countriesVisited: string
     countriesWishlist: string
+    continentsVisited: string
+    worldVisitedPercent: string
     emptyTitle: string
     emptyFilteredTitle: string
     emptyHint: string
@@ -138,6 +140,8 @@ export type Messages = {
     visitedCount: string
     wishlistCount: string
     countriesVisited: string
+    continentsVisited: string
+    worldVisitedPercent: string
     generated: string
   }
   support: {

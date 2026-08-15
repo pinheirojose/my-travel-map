@@ -44,6 +44,8 @@ const ptPT: Messages = {
     wishlist: 'Lista de desejos',
     countriesVisited: 'Países visitados',
     countriesWishlist: 'Países na lista',
+    continentsVisited: 'Continentes visitados',
+    worldVisitedPercent: 'Mundo visitado',
     emptyTitle: 'Ainda sem locais',
     emptyFilteredTitle: 'Nenhum local correspondente',
     emptyHint: 'Clique em qualquer sítio no mapa para adicionar o seu primeiro destino',
@@ -153,6 +155,8 @@ const ptPT: Messages = {
     visitedCount: 'Visitados',
     wishlistCount: 'Lista de desejos',
     countriesVisited: 'Países visitados',
+    continentsVisited: 'Continentes visitados',
+    worldVisitedPercent: 'Mundo visitado',
     generated: 'Gerado a',
   },
   support: {
