@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type {
   AppLocale,
+  AppPreferences,
+  HistoryEntry,
   MapStyleId,
   MapViewport,
   Place,
@@ -10,32 +12,57 @@ import type {
   SidebarFilters,
   SortOption,
 } from '@/types'
-import { DEFAULT_MAP_VIEWPORT, STORAGE_KEY } from '@/utils/constants'
+import {
+  DEFAULT_MAP_VIEWPORT,
+  MAX_UNDO_HISTORY,
+  STORAGE_KEY,
+} from '@/utils/constants'
 import { detectBrowserLocale } from '@/i18n'
 import { generateId } from '@/utils'
+
+function systemPrefersDark(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+const defaultPreferences: AppPreferences = {
+  darkMode: false,
+  hideSupportModal: false,
+  downloadCount: 0,
+  selectedMapStyle: 'classic_atlas',
+  sidebarOpen: false,
+  locale: detectBrowserLocale(),
+  showVisited: true,
+  showWishlist: true,
+  showCountryFill: true,
+  yearFilter: null,
+  hideBackupReminder: false,
+  lastJsonBackupPlaceCount: 0,
+  hasCompletedOnboarding: false,
+}
 
 interface TravelMapStore {
   places: Place[]
   mapViewport: MapViewport
-  preferences: {
-    darkMode: boolean
-    hideSupportModal: boolean
-    downloadCount: number
-    selectedMapStyle: MapStyleId
-    sidebarOpen: boolean
-    locale: AppLocale
-  }
+  preferences: AppPreferences
   selectedPlaceId: string | null
   sidebarFilters: SidebarFilters
   recentlyAddedIds: string[]
-  deletedPlaceBackup: Place | null
+  history: HistoryEntry[]
 
   addPlace: (draft: PlaceDraft) => Place
   updatePlace: (id: string, draft: Partial<PlaceDraft>) => void
   deletePlace: (id: string) => Place | null
-  undoDelete: () => void
+  undo: () => boolean
   resetAll: () => void
-  importData: (places: Place[], viewport?: MapViewport) => void
+  importData: (
+    places: Place[],
+    options?: {
+      viewport?: MapViewport
+      preferences?: Partial<AppPreferences>
+      mode?: 'replace' | 'merge'
+    },
+  ) => void
 
   setMapViewport: (viewport: MapViewport) => void
   setSelectedPlaceId: (id: string | null) => void
@@ -46,6 +73,17 @@ interface TravelMapStore {
   setLocale: (locale: AppLocale) => void
   incrementDownloadCount: () => number
   setHideSupportModal: (hide: boolean) => void
+  setMapLayer: (
+    patch: Partial<
+      Pick<
+        AppPreferences,
+        'showVisited' | 'showWishlist' | 'showCountryFill' | 'yearFilter'
+      >
+    >,
+  ) => void
+  completeOnboarding: () => void
+  dismissBackupReminder: () => void
+  markJsonBackup: () => void
 
   setSearch: (search: string) => void
   setStatusFilter: (status: PlaceStatus | 'all') => void
@@ -64,23 +102,27 @@ const defaultFilters: SidebarFilters = {
   sort: 'recently_added',
 }
 
+function pushHistory(
+  history: HistoryEntry[],
+  entry: HistoryEntry,
+): HistoryEntry[] {
+  return [...history, entry].slice(-MAX_UNDO_HISTORY)
+}
+
 export const useTravelMapStore = create<TravelMapStore>()(
   persist(
     (set, get) => ({
       places: [],
       mapViewport: DEFAULT_MAP_VIEWPORT,
       preferences: {
-        darkMode: false,
-        hideSupportModal: false,
-        downloadCount: 0,
-        selectedMapStyle: 'classic_atlas',
-        sidebarOpen: false,
+        ...defaultPreferences,
+        darkMode: systemPrefersDark(),
         locale: detectBrowserLocale(),
       },
       selectedPlaceId: null,
       sidebarFilters: defaultFilters,
       recentlyAddedIds: [],
-      deletedPlaceBackup: null,
+      history: [],
 
       addPlace: (draft) => {
         const place: Place = {
@@ -92,15 +134,23 @@ export const useTravelMapStore = create<TravelMapStore>()(
           places: [...state.places, place],
           recentlyAddedIds: [...state.recentlyAddedIds, place.id],
           selectedPlaceId: place.id,
+          history: pushHistory(state.history, { kind: 'add', id: place.id }),
+          preferences: {
+            ...state.preferences,
+            hasCompletedOnboarding: true,
+          },
         }))
         return place
       },
 
       updatePlace: (id, draft) => {
+        const before = get().places.find((p) => p.id === id)
+        if (!before) return
         set((state) => ({
           places: state.places.map((p) =>
             p.id === id ? { ...p, ...draft } : p,
           ),
+          history: pushHistory(state.history, { kind: 'update', place: before }),
         }))
       },
 
@@ -109,40 +159,94 @@ export const useTravelMapStore = create<TravelMapStore>()(
         if (!place) return null
         set((state) => ({
           places: state.places.filter((p) => p.id !== id),
-          deletedPlaceBackup: place,
           selectedPlaceId:
             state.selectedPlaceId === id ? null : state.selectedPlaceId,
+          history: pushHistory(state.history, { kind: 'delete', place }),
         }))
         return place
       },
 
-      undoDelete: () => {
-        const backup = get().deletedPlaceBackup
-        if (!backup) return
-        set((state) => ({
-          places: [...state.places, backup],
-          deletedPlaceBackup: null,
-        }))
+      undo: () => {
+        const { history } = get()
+        const last = history[history.length - 1]
+        if (!last) return false
+        const rest = history.slice(0, -1)
+
+        if (last.kind === 'add') {
+          set((state) => ({
+            places: state.places.filter((p) => p.id !== last.id),
+            selectedPlaceId:
+              state.selectedPlaceId === last.id ? null : state.selectedPlaceId,
+            history: rest,
+          }))
+        } else if (last.kind === 'delete') {
+          set((state) => ({
+            places: [...state.places, last.place],
+            history: rest,
+          }))
+        } else if (last.kind === 'update') {
+          set((state) => ({
+            places: state.places.map((p) =>
+              p.id === last.place.id ? last.place : p,
+            ),
+            history: rest,
+          }))
+        } else {
+          set({
+            places: last.places,
+            mapViewport: last.mapViewport,
+            selectedPlaceId: null,
+            history: rest,
+          })
+        }
+        return true
       },
 
       resetAll: () => {
+        const { places, mapViewport, history } = get()
         set({
           places: [],
           mapViewport: DEFAULT_MAP_VIEWPORT,
           selectedPlaceId: null,
           sidebarFilters: defaultFilters,
           recentlyAddedIds: [],
-          deletedPlaceBackup: null,
+          history: pushHistory(history, {
+            kind: 'snapshot',
+            places,
+            mapViewport,
+          }),
         })
       },
 
-      importData: (places, viewport) => {
+      importData: (places, options) => {
+        const mode = options?.mode ?? 'replace'
+        const { places: current, mapViewport, history, preferences } = get()
+        const nextPlaces =
+          mode === 'merge'
+            ? mergePlaces(current, places)
+            : places
+        const nextPrefs = options?.preferences
+          ? {
+              ...preferences,
+              ...pickImportedPreferences(options.preferences),
+            }
+          : preferences
+
         set({
-          places,
-          mapViewport: viewport ?? get().mapViewport,
+          places: nextPlaces,
+          mapViewport: options?.viewport ?? mapViewport,
+          preferences: {
+            ...nextPrefs,
+            hasCompletedOnboarding:
+              nextPlaces.length > 0 || nextPrefs.hasCompletedOnboarding,
+          },
           selectedPlaceId: null,
           recentlyAddedIds: [],
-          deletedPlaceBackup: null,
+          history: pushHistory(history, {
+            kind: 'snapshot',
+            places: current,
+            mapViewport,
+          }),
         })
       },
 
@@ -190,6 +294,30 @@ export const useTravelMapStore = create<TravelMapStore>()(
           preferences: { ...state.preferences, hideSupportModal: hide },
         })),
 
+      setMapLayer: (patch) =>
+        set((state) => ({
+          preferences: { ...state.preferences, ...patch },
+        })),
+
+      completeOnboarding: () =>
+        set((state) => ({
+          preferences: { ...state.preferences, hasCompletedOnboarding: true },
+        })),
+
+      dismissBackupReminder: () =>
+        set((state) => ({
+          preferences: { ...state.preferences, hideBackupReminder: true },
+        })),
+
+      markJsonBackup: () =>
+        set((state) => ({
+          preferences: {
+            ...state.preferences,
+            lastJsonBackupPlaceCount: state.places.length,
+            hideBackupReminder: false,
+          },
+        })),
+
       setSearch: (search) =>
         set((state) => ({
           sidebarFilters: { ...state.sidebarFilters, search },
@@ -232,19 +360,58 @@ export const useTravelMapStore = create<TravelMapStore>()(
       merge: (persisted, current) => {
         const persistedState = (persisted ?? {}) as Partial<TravelMapStore>
         const persistedPrefs = persistedState.preferences
+        const hadPersistedPrefs = Boolean(persistedPrefs)
         return {
           ...current,
           ...persistedState,
+          history: [],
           preferences: {
             ...current.preferences,
             ...persistedPrefs,
+            darkMode: hadPersistedPrefs
+              ? Boolean(persistedPrefs?.darkMode)
+              : systemPrefersDark(),
             locale:
               persistedPrefs?.locale ??
               current.preferences.locale ??
               detectBrowserLocale(),
+            showVisited: persistedPrefs?.showVisited ?? true,
+            showWishlist: persistedPrefs?.showWishlist ?? true,
+            showCountryFill: persistedPrefs?.showCountryFill ?? true,
+            yearFilter: persistedPrefs?.yearFilter ?? null,
+            hideBackupReminder: persistedPrefs?.hideBackupReminder ?? false,
+            lastJsonBackupPlaceCount:
+              persistedPrefs?.lastJsonBackupPlaceCount ?? 0,
+            hasCompletedOnboarding:
+              persistedPrefs?.hasCompletedOnboarding ??
+              (persistedState.places?.length ?? 0) > 0,
           },
         }
       },
     },
   ),
 )
+
+function mergePlaces(current: Place[], incoming: Place[]): Place[] {
+  const byId = new Map(current.map((p) => [p.id, p]))
+  for (const place of incoming) {
+    byId.set(place.id, place)
+  }
+  return Array.from(byId.values())
+}
+
+function pickImportedPreferences(
+  prefs: Partial<AppPreferences>,
+): Partial<AppPreferences> {
+  const next: Partial<AppPreferences> = {}
+  if (prefs.darkMode !== undefined) next.darkMode = prefs.darkMode
+  if (prefs.selectedMapStyle) next.selectedMapStyle = prefs.selectedMapStyle
+  if (prefs.locale) next.locale = prefs.locale
+  if (prefs.showVisited !== undefined) next.showVisited = prefs.showVisited
+  if (prefs.showWishlist !== undefined) next.showWishlist = prefs.showWishlist
+  if (prefs.showCountryFill !== undefined)
+    next.showCountryFill = prefs.showCountryFill
+  if (prefs.hideSupportModal !== undefined)
+    next.hideSupportModal = prefs.hideSupportModal
+  return next
+}

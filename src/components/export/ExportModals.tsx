@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Download, Heart, Loader2 } from 'lucide-react'
 import {
@@ -11,8 +11,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import type { MapStyleId } from '@/types'
-import { SUPPORT_LINKS } from '@/utils/constants'
+import type { ExportPrintOptions, MapStyleId } from '@/types'
+import { SUPPORT_LINKS, DEFAULT_EXPORT_PRINT_OPTIONS } from '@/utils/constants'
 import { MAP_STYLES } from '@/utils/mapStyles'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/utils'
@@ -117,22 +117,50 @@ export function SupportModal({
 interface ExportModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  selectedStyle: string
-  onStyleChange: (styleId: MapStyleId) => void
-  onDownload: () => Promise<void>
+  selectedStyle: MapStyleId
+  liveStyle: MapStyleId
+  onApplyLiveStyle: (styleId: MapStyleId) => void
+  onDownload: (
+    styleId: MapStyleId,
+    options: ExportPrintOptions,
+  ) => Promise<void>
   isExporting: boolean
+  exportProgress: { done: number; total: number } | null
+  previewUrl: string | null
 }
 
 export function ExportModal({
   open,
   onOpenChange,
   selectedStyle,
-  onStyleChange,
+  liveStyle,
+  onApplyLiveStyle,
   onDownload,
   isExporting,
+  exportProgress,
+  previewUrl,
 }: ExportModalProps) {
   const { t } = useTranslation()
-  const selected = MAP_STYLES.find((s) => s.id === selectedStyle)
+  const [styleId, setStyleId] = useState<MapStyleId>(selectedStyle)
+  const [applyLive, setApplyLive] = useState(false)
+  const [options, setOptions] = useState<ExportPrintOptions>(
+    DEFAULT_EXPORT_PRINT_OPTIONS,
+  )
+  const originalLiveRef = useRef(liveStyle)
+  const selected = MAP_STYLES.find((s) => s.id === styleId)
+
+  useEffect(() => {
+    if (open) {
+      setStyleId(selectedStyle)
+      setApplyLive(false)
+      originalLiveRef.current = liveStyle
+    }
+  }, [open, selectedStyle])
+
+  const handleStyle = (id: MapStyleId) => {
+    setStyleId(id)
+    if (applyLive) onApplyLiveStyle(id)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,10 +174,10 @@ export function ExportModal({
           {MAP_STYLES.map((style) => (
             <button
               key={style.id}
-              onClick={() => onStyleChange(style.id)}
+              onClick={() => handleStyle(style.id)}
               className={cn(
                 'relative flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left cursor-pointer',
-                selectedStyle === style.id
+                styleId === style.id
                   ? 'border-primary bg-primary/5 shadow-sm'
                   : 'border-border hover:border-primary/30 hover:bg-accent/50',
               )}
@@ -171,39 +199,120 @@ export function ExportModal({
           ))}
         </div>
 
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              {t('export.layout')}
+            </p>
+            <div className="flex gap-1">
+              <OptionChip
+                active={options.layout === 'landscape'}
+                onClick={() => setOptions((o) => ({ ...o, layout: 'landscape' }))}
+              >
+                {t('export.landscape')}
+              </OptionChip>
+              <OptionChip
+                active={options.layout === 'portrait'}
+                onClick={() => setOptions((o) => ({ ...o, layout: 'portrait' }))}
+              >
+                {t('export.portrait')}
+              </OptionChip>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              {t('export.crop')}
+            </p>
+            <div className="flex gap-1">
+              <OptionChip
+                active={options.crop === 'fit'}
+                onClick={() => setOptions((o) => ({ ...o, crop: 'fit' }))}
+              >
+                {t('export.cropFit')}
+              </OptionChip>
+              <OptionChip
+                active={options.crop === 'world'}
+                onClick={() => setOptions((o) => ({ ...o, crop: 'world' }))}
+              >
+                {t('export.cropWorld')}
+              </OptionChip>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              checked={options.showTitle}
+              onCheckedChange={(checked) =>
+                setOptions((o) => ({ ...o, showTitle: checked === true }))
+              }
+            />
+            {t('export.showTitle')}
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              checked={options.showStats}
+              onCheckedChange={(checked) =>
+                setOptions((o) => ({ ...o, showStats: checked === true }))
+              }
+            />
+            {t('export.showStats')}
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              checked={applyLive}
+              onCheckedChange={(checked) => {
+                const next = checked === true
+                setApplyLive(next)
+                if (next) onApplyLiveStyle(styleId)
+                else onApplyLiveStyle(originalLiveRef.current)
+              }}
+            />
+            {t('export.applyToLiveMap')}
+          </label>
+        </div>
+
         <div
-          className="rounded-xl border border-border p-6 text-center"
+          className="rounded-xl border border-border overflow-hidden min-h-[120px] flex items-center justify-center"
           style={{
             background: selected?.exportBackground,
             color: selected?.exportTextColor,
           }}
         >
-          <p
-            className="text-2xl font-bold mb-1"
-            style={{ fontFamily: selected?.exportTitleFont }}
-          >
-            {t('export.mapTitle')}
-          </p>
-          <p className="text-sm opacity-70">{t('export.previewLabel')}</p>
-          <div className="flex justify-center gap-4 mt-3 text-xs">
-            <span className="flex items-center gap-1">
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: selected?.markerVisitedColor }}
-              />
-              {t('export.visited')}
-            </span>
-            <span className="flex items-center gap-1">
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: selected?.markerWishlistColor }}
-              />
-              {t('export.wishlist')}
-            </span>
-          </div>
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt={t('export.previewLabel')}
+              className="w-full h-40 object-cover"
+            />
+          ) : (
+            <div className="p-6 text-center">
+              <p
+                className="text-2xl font-bold mb-1"
+                style={{ fontFamily: selected?.exportTitleFont }}
+              >
+                {t('export.mapTitle')}
+              </p>
+              <p className="text-sm opacity-70">{t('export.liveMapNote')}</p>
+            </div>
+          )}
         </div>
 
-        <Button className="w-full" onClick={onDownload} disabled={isExporting}>
+        {isExporting && exportProgress && exportProgress.total > 0 && (
+          <p className="text-xs text-muted-foreground text-center">
+            {t('export.progress', {
+              done: exportProgress.done,
+              total: exportProgress.total,
+            })}
+          </p>
+        )}
+
+        <Button
+          className="w-full"
+          onClick={() => onDownload(styleId, options)}
+          disabled={isExporting}
+        >
           {isExporting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -218,5 +327,30 @@ export function ExportModal({
         </Button>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function OptionChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'h-8 px-2.5 rounded-md text-xs border cursor-pointer',
+        active
+          ? 'border-primary bg-primary/10'
+          : 'border-border hover:bg-accent',
+      )}
+    >
+      {children}
+    </button>
   )
 }

@@ -64,6 +64,17 @@ export const STORAGE_KEY = 'travel-map-storage-v1'
 
 export const SUPPORT_MODAL_INTERVAL = 3
 
+export const BACKUP_REMINDER_THRESHOLD = 5
+
+export const MAX_UNDO_HISTORY = 20
+
+export const DEFAULT_EXPORT_PRINT_OPTIONS = {
+  layout: 'landscape' as const,
+  crop: 'fit' as const,
+  showTitle: true,
+  showStats: true,
+}
+
 export const SUPPORT_LINKS = {
   buyMeACoffee: 'https://buymeacoffee.com',
   kofi: 'https://ko-fi.com',

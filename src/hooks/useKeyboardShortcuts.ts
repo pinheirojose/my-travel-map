@@ -7,6 +7,7 @@ interface KeyboardShortcutsOptions {
   onExport: () => void
   onToggleSidebar: () => void
   onToggleDarkMode: () => void
+  onHelp?: () => void
 }
 
 export function useKeyboardShortcuts({
@@ -15,9 +16,10 @@ export function useKeyboardShortcuts({
   onExport,
   onToggleSidebar,
   onToggleDarkMode,
+  onHelp,
 }: KeyboardShortcutsOptions) {
-  const undoDelete = useTravelMapStore((s) => s.undoDelete)
-  const deletedPlaceBackup = useTravelMapStore((s) => s.deletedPlaceBackup)
+  const undo = useTravelMapStore((s) => s.undo)
+  const historyLength = useTravelMapStore((s) => s.history.length)
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -43,9 +45,12 @@ export function useKeyboardShortcuts({
       } else if (mod && e.key === 'd') {
         e.preventDefault()
         onToggleDarkMode()
-      } else if (mod && e.key === 'z' && deletedPlaceBackup) {
+      } else if (mod && (e.key === '/' || e.key === '?')) {
         e.preventDefault()
-        undoDelete()
+        onHelp?.()
+      } else if (mod && e.key === 'z' && historyLength > 0) {
+        e.preventDefault()
+        undo()
       } else if (e.key === 'Escape') {
         useTravelMapStore.getState().setSelectedPlaceId(null)
         onAddPlaceEscape?.()
@@ -57,8 +62,9 @@ export function useKeyboardShortcuts({
       onExport,
       onToggleSidebar,
       onToggleDarkMode,
-      undoDelete,
-      deletedPlaceBackup,
+      onHelp,
+      undo,
+      historyLength,
     ],
   )
 

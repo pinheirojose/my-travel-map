@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { computeStats, filterAndSortPlaces, groupPlacesByCountry } from '@/services/places'
 import { useTravelMapStore } from '@/store/travelMapStore'
 
@@ -29,6 +29,17 @@ export function useTravelStats() {
 }
 
 export function useIsMobile() {
-  if (typeof window === 'undefined') return false
-  return window.innerWidth < 768
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768,
+  )
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return isMobile
 }

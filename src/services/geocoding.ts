@@ -60,6 +60,29 @@ function acceptLanguage(locale?: string): string {
   return 'en'
 }
 
+let lastNominatimAt = 0
+const NOMINATIM_MIN_INTERVAL_MS = 1100
+
+async function nominatimFetch(url: URL, locale?: string): Promise<Response> {
+  const wait = NOMINATIM_MIN_INTERVAL_MS - (Date.now() - lastNominatimAt)
+  if (wait > 0) {
+    await new Promise((resolve) => setTimeout(resolve, wait))
+  }
+  lastNominatimAt = Date.now()
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: 'application/json',
+      'Accept-Language': acceptLanguage(locale),
+    },
+  })
+
+  if (response.status === 429) {
+    throw new Error('RATE_LIMIT')
+  }
+  return response
+}
+
 export async function reverseGeocode(
   latitude: number,
   longitude: number,
@@ -72,12 +95,7 @@ export async function reverseGeocode(
   url.searchParams.set('addressdetails', '1')
   url.searchParams.set('zoom', '18')
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: 'application/json',
-      'Accept-Language': acceptLanguage(locale),
-    },
-  })
+  const response = await nominatimFetch(url, locale)
 
   if (!response.ok) {
     throw new Error('Failed to reverse geocode location')
@@ -148,12 +166,7 @@ export async function searchPlaces(
   url.searchParams.set('addressdetails', '1')
   url.searchParams.set('limit', String(limit))
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: 'application/json',
-      'Accept-Language': acceptLanguage(locale),
-    },
-  })
+  const response = await nominatimFetch(url, locale)
 
   if (!response.ok) {
     throw new Error('Failed to search for places')

@@ -170,6 +170,64 @@ export function PlaceDialog({
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="city">{t('placeDialog.city')}</Label>
+                <Input
+                  id="city"
+                  value={draft.city}
+                  onChange={(e) => update('city', e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="region">{t('placeDialog.region')}</Label>
+                <Input
+                  id="region"
+                  value={draft.region}
+                  onChange={(e) => update('region', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="country">{t('placeDialog.country')}</Label>
+              <Input
+                id="country"
+                value={draft.country}
+                onChange={(e) => update('country', e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="latitude">{t('placeDialog.latitude')}</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="0.0001"
+                  value={draft.latitude}
+                  onChange={(e) =>
+                    update('latitude', Number.parseFloat(e.target.value) || 0)
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="longitude">{t('placeDialog.longitude')}</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="0.0001"
+                  value={draft.longitude}
+                  onChange={(e) =>
+                    update('longitude', Number.parseFloat(e.target.value) || 0)
+                  }
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              {t('placeDialog.locationHint')}
+            </p>
+
             <div className="grid gap-2">
               <Label htmlFor="visitedDate">{t('placeDialog.visitedDate')}</Label>
               <Input

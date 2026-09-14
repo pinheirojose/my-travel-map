@@ -1,10 +1,15 @@
 import { toPng } from 'html-to-image'
-import type { MapStyleDefinition, Place, TravelStats } from '@/types'
+import type {
+  ExportPrintOptions,
+  MapStyleDefinition,
+  Place,
+  TravelStats,
+} from '@/types'
 import { CATEGORY_CONFIG, STATUS_CONFIG } from '@/utils/constants'
 import { formatDate } from '@/utils'
 
-const EXPORT_WIDTH = 3840
-const EXPORT_HEIGHT = 2160
+const LANDSCAPE_WIDTH = 3840
+const LANDSCAPE_HEIGHT = 2160
 const TILE_SIZE = 256
 const MAX_EXPORT_ZOOM = 8
 const MAX_TILES = 256
@@ -242,11 +247,14 @@ async function renderMapTiles(
   style: MapStyleDefinition,
   bounds: GeoBounds,
   mapArea: MapArea,
+  onProgress?: (done: number, total: number) => void,
 ): Promise<{
   zoom: number
   originX: number
   originY: number
   scale: number
+  missingTiles: number
+  totalTiles: number
 }> {
   const view = fitBoundsToMap(bounds, mapArea)
   const { zoom, originX, originY, scale } = view
@@ -279,8 +287,11 @@ async function renderMapTiles(
     }
   }
 
+  let completed = 0
   const loaded = await mapPool(tiles, TILE_FETCH_CONCURRENCY, async (tile) => {
     const url = await fetchTileBlobUrl(style.tileUrl, tile.x, tile.y, zoom)
+    completed += 1
+    onProgress?.(completed, tiles.length)
     if (!url) return null
     const img = await loadImage(url)
     URL.revokeObjectURL(url)
@@ -297,7 +308,8 @@ async function renderMapTiles(
   }
 
   ctx.restore()
-  return view
+  const missingTiles = loaded.filter((item) => !item).length
+  return { ...view, missingTiles, totalTiles: tiles.length }
 }
 
 async function drawMarker(
@@ -367,8 +379,18 @@ export async function generatePrintableMap(
   style: MapStyleDefinition,
   stats: TravelStats,
   labels: ExportLabels = DEFAULT_EXPORT_LABELS,
-): Promise<Blob> {
+  printOptions: Partial<ExportPrintOptions> = {},
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ blob: Blob; missingTiles: number; totalTiles: number }> {
   await ensureExportFonts(style)
+
+  const layout = printOptions.layout ?? 'landscape'
+  const crop = printOptions.crop ?? 'fit'
+  const showTitle = printOptions.showTitle ?? true
+  const showStats = printOptions.showStats ?? true
+
+  const EXPORT_WIDTH = layout === 'portrait' ? LANDSCAPE_HEIGHT : LANDSCAPE_WIDTH
+  const EXPORT_HEIGHT = layout === 'portrait' ? LANDSCAPE_WIDTH : LANDSCAPE_HEIGHT
 
   const canvas = document.createElement('canvas')
   canvas.width = EXPORT_WIDTH
@@ -378,15 +400,21 @@ export async function generatePrintableMap(
   ctx.fillStyle = style.exportBackground
   ctx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
 
+  const topPad = showTitle ? 160 : 80
+  const bottomPad = showStats ? 460 : 120
+
   const mapArea: MapArea = {
     x: 80,
-    y: 160,
+    y: topPad,
     width: EXPORT_WIDTH - 160,
-    height: EXPORT_HEIGHT - 460,
+    height: EXPORT_HEIGHT - topPad - (showStats ? 300 : bottomPad - 80),
   }
 
-  const bounds = computeBounds(places)
-  const view = await renderMapTiles(ctx, style, bounds, mapArea)
+  const bounds =
+    crop === 'world'
+      ? { north: 72, south: -55, east: 180, west: -180 }
+      : computeBounds(places)
+  const view = await renderMapTiles(ctx, style, bounds, mapArea, onProgress)
 
   ctx.strokeStyle = style.exportAccentColor
   ctx.globalAlpha = 0.35
@@ -423,93 +451,96 @@ export async function generatePrintableMap(
     await drawMarker(ctx, statusColor, emoji, pos.x, pos.y, markerSize)
   }
 
-  ctx.fillStyle = style.exportTextColor
-  ctx.font = `600 88px ${style.exportTitleFont}`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  if ('letterSpacing' in ctx) {
-    ctx.letterSpacing = '6px'
+  if (showTitle) {
+    ctx.fillStyle = style.exportTextColor
+    ctx.font = `600 88px ${style.exportTitleFont}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'alphabetic'
+    if ('letterSpacing' in ctx) {
+      ctx.letterSpacing = '6px'
+    }
+    ctx.fillText(labels.mapTitle, EXPORT_WIDTH / 2, 108)
+    if ('letterSpacing' in ctx) {
+      ctx.letterSpacing = '0px'
+    }
   }
-  ctx.fillText(labels.mapTitle, EXPORT_WIDTH / 2, 108)
-  if ('letterSpacing' in ctx) {
-    ctx.letterSpacing = '0px'
-  }
 
-  const legendY = EXPORT_HEIGHT - 260
-  const legendX = 100
-  const legendWidth = 360
-  const legendHeight = 180
-
-  ctx.fillStyle = style.exportLegendBg
-  ctx.beginPath()
-  ctx.roundRect(legendX, legendY, legendWidth, legendHeight, 16)
-  ctx.fill()
-  ctx.strokeStyle = style.exportAccentColor
-  ctx.lineWidth = 1
-  ctx.stroke()
-
-  ctx.font = `600 28px ${style.exportBodyFont}`
-  ctx.textAlign = 'left'
-  ctx.fillStyle = style.exportTextColor
-  ctx.fillText(labels.legend, legendX + 24, legendY + 40)
-
-  ctx.font = `400 24px ${style.exportBodyFont}`
-  ctx.beginPath()
-  ctx.arc(legendX + 36, legendY + 78, 10, 0, Math.PI * 2)
-  ctx.fillStyle = style.markerVisitedColor
-  ctx.fill()
-  ctx.fillStyle = style.exportSecondaryColor
-  ctx.fillText(labels.visited, legendX + 56, legendY + 86)
-
-  ctx.beginPath()
-  ctx.arc(legendX + 36, legendY + 122, 10, 0, Math.PI * 2)
-  ctx.fillStyle = style.markerWishlistColor
-  ctx.fill()
-  ctx.fillStyle = style.exportSecondaryColor
-  ctx.fillText(labels.wishlist, legendX + 56, legendY + 130)
-
-  // Travel coverage stats — three featured cards
-  const statsStartX = legendX + legendWidth + 32
-  const statsGap = 24
-  const statsWidth =
-    (EXPORT_WIDTH - statsStartX - 100 - statsGap * 2) / 3
-  const statsHeight = legendHeight
-
-  const featuredStats: Array<{ value: string; label: string }> = [
-    {
-      value: `${stats.worldVisitedPercent}%`,
-      label: labels.worldVisitedPercent,
-    },
-    {
-      value: String(stats.countriesVisited),
-      label: labels.countriesVisited,
-    },
-    {
-      value: String(stats.continentsVisited),
-      label: labels.continentsVisited,
-    },
-  ]
-
-  featuredStats.forEach((stat, index) => {
-    const x = statsStartX + index * (statsWidth + statsGap)
+  if (showStats) {
+    const legendY = EXPORT_HEIGHT - 260
+    const legendX = 100
+    const legendWidth = 360
+    const legendHeight = 180
 
     ctx.fillStyle = style.exportLegendBg
     ctx.beginPath()
-    ctx.roundRect(x, legendY, statsWidth, statsHeight, 16)
+    ctx.roundRect(legendX, legendY, legendWidth, legendHeight, 16)
     ctx.fill()
     ctx.strokeStyle = style.exportAccentColor
     ctx.lineWidth = 1
     ctx.stroke()
 
-    ctx.textAlign = 'center'
+    ctx.font = `600 28px ${style.exportBodyFont}`
+    ctx.textAlign = 'left'
     ctx.fillStyle = style.exportTextColor
-    ctx.font = `600 56px ${style.exportTitleFont}`
-    ctx.fillText(stat.value, x + statsWidth / 2, legendY + 88)
+    ctx.fillText(labels.legend, legendX + 24, legendY + 40)
 
+    ctx.font = `400 24px ${style.exportBodyFont}`
+    ctx.beginPath()
+    ctx.arc(legendX + 36, legendY + 78, 10, 0, Math.PI * 2)
+    ctx.fillStyle = style.markerVisitedColor
+    ctx.fill()
     ctx.fillStyle = style.exportSecondaryColor
-    ctx.font = `500 22px ${style.exportBodyFont}`
-    ctx.fillText(stat.label, x + statsWidth / 2, legendY + 132)
-  })
+    ctx.fillText(labels.visited, legendX + 56, legendY + 86)
+
+    ctx.beginPath()
+    ctx.arc(legendX + 36, legendY + 122, 10, 0, Math.PI * 2)
+    ctx.fillStyle = style.markerWishlistColor
+    ctx.fill()
+    ctx.fillStyle = style.exportSecondaryColor
+    ctx.fillText(labels.wishlist, legendX + 56, legendY + 130)
+
+    const statsStartX = legendX + legendWidth + 32
+    const statsGap = 24
+    const statsWidth =
+      (EXPORT_WIDTH - statsStartX - 100 - statsGap * 2) / 3
+    const statsHeight = legendHeight
+
+    const featuredStats: Array<{ value: string; label: string }> = [
+      {
+        value: `${stats.worldVisitedPercent}%`,
+        label: labels.worldVisitedPercent,
+      },
+      {
+        value: String(stats.countriesVisited),
+        label: labels.countriesVisited,
+      },
+      {
+        value: String(stats.continentsVisited),
+        label: labels.continentsVisited,
+      },
+    ]
+
+    featuredStats.forEach((stat, index) => {
+      const x = statsStartX + index * (statsWidth + statsGap)
+
+      ctx.fillStyle = style.exportLegendBg
+      ctx.beginPath()
+      ctx.roundRect(x, legendY, statsWidth, statsHeight, 16)
+      ctx.fill()
+      ctx.strokeStyle = style.exportAccentColor
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      ctx.textAlign = 'center'
+      ctx.fillStyle = style.exportTextColor
+      ctx.font = `600 56px ${style.exportTitleFont}`
+      ctx.fillText(stat.value, x + statsWidth / 2, legendY + 88)
+
+      ctx.fillStyle = style.exportSecondaryColor
+      ctx.font = `500 22px ${style.exportBodyFont}`
+      ctx.fillText(stat.label, x + statsWidth / 2, legendY + 132)
+    })
+  }
 
   ctx.font = `400 18px ${style.exportBodyFont}`
   ctx.fillStyle = style.exportSecondaryColor
@@ -521,7 +552,7 @@ export async function generatePrintableMap(
   }).format(new Date())
   ctx.fillText(`${labels.generated} ${dateStr}`, EXPORT_WIDTH - 100, EXPORT_HEIGHT - 40)
 
-  if (style.decorative) {
+  if (style.decorative && showTitle) {
     ctx.strokeStyle = style.exportAccentColor
     ctx.lineWidth = 2
     ctx.beginPath()
@@ -530,16 +561,22 @@ export async function generatePrintableMap(
     ctx.stroke()
   }
 
-  return new Promise((resolve, reject) => {
+  const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
-      (blob) => {
-        if (blob) resolve(blob)
+      (result) => {
+        if (result) resolve(result)
         else reject(new Error('Failed to generate image'))
       },
       'image/png',
       1,
     )
   })
+
+  return {
+    blob,
+    missingTiles: view.missingTiles,
+    totalTiles: view.totalTiles,
+  }
 }
 
 export async function captureMapPreview(element: HTMLElement): Promise<string> {
@@ -558,12 +595,7 @@ export function buildExportFilename(): string {
 export function buildJsonExport(
   places: Place[],
   mapViewport: { center: [number, number]; zoom: number },
-  preferences: {
-    darkMode: boolean
-    hideSupportModal: boolean
-    downloadCount: number
-    selectedMapStyle: string
-  },
+  preferences: object,
 ) {
   return {
     version: 1 as const,
@@ -577,6 +609,7 @@ export function buildJsonExport(
 export function validateJsonImport(data: unknown): data is {
   places: Place[]
   mapViewport?: { center: [number, number]; zoom: number }
+  preferences?: Record<string, unknown>
 } {
   if (!data || typeof data !== 'object') return false
   const obj = data as Record<string, unknown>

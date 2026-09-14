@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react'
+import L from 'leaflet'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   MapContainer,
+  Marker,
   TileLayer,
   ZoomControl,
   useMap,
@@ -8,43 +10,74 @@ import {
 } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { PlaceMarkerComponent } from './PlaceMarkerComponent'
+import { CountryFillLayer, FitBoundsOnDemand } from './CountryFillLayer'
+import { createClusterIcon } from './PlaceMarker'
 import { useTravelMapStore } from '@/store/travelMapStore'
 import { getMapStyle } from '@/utils/mapStyles'
+import { clusterPlaces } from '@/utils/clusterPlaces'
 import type { Place } from '@/types'
 
 interface WorldMapProps {
   onMapClick: (lat: number, lng: number) => void
   onEditPlace: (place: Place) => void
   onDeletePlace: (id: string) => void
+  onPlaceMoved: (place: Place, lat: number, lng: number) => void
   addMode: boolean
   flyToTarget?: { lat: number; lng: number; zoom?: number } | null
   onFlyToComplete?: () => void
+  fitRequestId?: number
+}
+
+function visiblePlaces(
+  places: Place[],
+  showVisited: boolean,
+  showWishlist: boolean,
+  yearFilter: number | null,
+): Place[] {
+  return places.filter((place) => {
+    if (place.status === 'visited' && !showVisited) return false
+    if (place.status === 'wishlist' && !showWishlist) return false
+    if (yearFilter != null) {
+      if (!place.visitedDate) return false
+      return Number.parseInt(place.visitedDate.slice(0, 4), 10) === yearFilter
+    }
+    return true
+  })
 }
 
 function MapEventHandler({
   onMapClick,
   addMode,
+  onZoom,
 }: {
   onMapClick: (lat: number, lng: number) => void
   addMode: boolean
+  onZoom: (zoom: number) => void
 }) {
   const setMapViewport = useTravelMapStore((s) => s.setMapViewport)
 
-  useMapEvents({
+  const map = useMapEvents({
     click(e) {
       if (addMode) {
         onMapClick(e.latlng.lat, e.latlng.lng)
       }
     },
+    zoomend() {
+      onZoom(map.getZoom())
+    },
     moveend(e) {
-      const map = e.target
-      const center = map.getCenter()
+      const target = e.target
+      const center = target.getCenter()
       setMapViewport({
         center: [center.lat, center.lng],
-        zoom: map.getZoom(),
+        zoom: target.getZoom(),
       })
     },
   })
+
+  useEffect(() => {
+    onZoom(map.getZoom())
+  }, [map, onZoom])
 
   return null
 }
@@ -118,25 +151,41 @@ export function WorldMap({
   onMapClick,
   onEditPlace,
   onDeletePlace,
+  onPlaceMoved,
   addMode,
   flyToTarget,
   onFlyToComplete,
+  fitRequestId = 0,
 }: WorldMapProps) {
   const places = useTravelMapStore((s) => s.places)
   const mapViewport = useTravelMapStore((s) => s.mapViewport)
   const selectedPlaceId = useTravelMapStore((s) => s.selectedPlaceId)
   const recentlyAddedIds = useTravelMapStore((s) => s.recentlyAddedIds)
+  const showVisited = useTravelMapStore((s) => s.preferences.showVisited)
+  const showWishlist = useTravelMapStore((s) => s.preferences.showWishlist)
+  const yearFilter = useTravelMapStore((s) => s.preferences.yearFilter)
   const selectedMapStyle = useTravelMapStore(
     (s) => s.preferences.selectedMapStyle,
   )
   const setSelectedPlaceId = useTravelMapStore((s) => s.setSelectedPlaceId)
+  const [zoom, setZoom] = useState(mapViewport.zoom)
 
   const style = getMapStyle(selectedMapStyle)
+  const filtered = useMemo(
+    () => visiblePlaces(places, showVisited, showWishlist, yearFilter),
+    [places, showVisited, showWishlist, yearFilter],
+  )
+  const clustered = useMemo(
+    () => clusterPlaces(filtered, zoom),
+    [filtered, zoom],
+  )
 
   const handleSelect = useCallback(
     (id: string) => setSelectedPlaceId(id),
     [setSelectedPlaceId],
   )
+
+  const handleZoom = useCallback((next: number) => setZoom(next), [])
 
   return (
     <MapContainer
@@ -157,24 +206,54 @@ export function WorldMap({
         subdomains={style.tileSubdomains ?? 'abc'}
         maxZoom={19}
       />
-      <MapEventHandler onMapClick={onMapClick} addMode={addMode} />
+      <CountryFillLayer />
+      <MapEventHandler
+        onMapClick={onMapClick}
+        addMode={addMode}
+        onZoom={handleZoom}
+      />
       <MapController
         flyToTarget={flyToTarget}
         onFlyToComplete={onFlyToComplete}
       />
+      <FitBoundsOnDemand requestId={fitRequestId} />
       <CursorStyle addMode={addMode} />
 
-      {places.map((place) => (
-        <PlaceMarkerComponent
-          key={place.id}
-          place={place}
-          isSelected={selectedPlaceId === place.id}
-          isNew={recentlyAddedIds.includes(place.id)}
-          onSelect={handleSelect}
-          onEdit={onEditPlace}
-          onDelete={onDeletePlace}
-        />
-      ))}
+      {clustered.map((item) => {
+        if (item.type === 'cluster') {
+          return (
+            <Marker
+              key={item.id}
+              position={[item.latitude, item.longitude]}
+              icon={createClusterIcon(item.count, style.exportAccentColor)}
+              eventHandlers={{
+                click: (e) => {
+                  const map = e.target._map as L.Map
+                  map.flyTo(
+                    [item.latitude, item.longitude],
+                    Math.min(map.getZoom() + 2, 12),
+                    { duration: 0.6 },
+                  )
+                },
+              }}
+            />
+          )
+        }
+        const place = item.place
+        return (
+          <PlaceMarkerComponent
+            key={place.id}
+            place={place}
+            isSelected={selectedPlaceId === place.id}
+            isNew={recentlyAddedIds.includes(place.id)}
+            draggable={!addMode}
+            onSelect={handleSelect}
+            onEdit={onEditPlace}
+            onDelete={onDeletePlace}
+            onMoved={onPlaceMoved}
+          />
+        )
+      })}
     </MapContainer>
   )
 }

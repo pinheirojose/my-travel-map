@@ -12,18 +12,22 @@ interface PlaceMarkerProps {
   place: Place
   isSelected: boolean
   isNew: boolean
+  draggable?: boolean
   onSelect: (id: string) => void
   onEdit: (place: Place) => void
   onDelete: (id: string) => void
+  onMoved?: (place: Place, lat: number, lng: number) => void
 }
 
 export function PlaceMarkerComponent({
   place,
   isSelected,
   isNew,
+  draggable = false,
   onSelect,
   onEdit,
   onDelete,
+  onMoved,
 }: PlaceMarkerProps) {
   const { t } = useTranslation()
   const markerRef = useRef<L.Marker>(null)
@@ -65,8 +69,13 @@ export function PlaceMarkerComponent({
       ref={markerRef}
       position={[place.latitude, place.longitude]}
       icon={icon}
+      draggable={draggable}
       eventHandlers={{
         click: () => onSelect(place.id),
+        dragend: (event) => {
+          const latlng = event.target.getLatLng()
+          onMoved?.(place, latlng.lat, latlng.lng)
+        },
       }}
     >
       <Tooltip direction="top" offset={[0, -16]} opacity={0.95}>

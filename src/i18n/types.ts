@@ -34,6 +34,10 @@ export type Messages = {
     darkMode: string
     lightMode: string
     places: string
+    help: string
+    helpTooltip: string
+    more: string
+    fitPlaces: string
   }
   sidebar: {
     title: string
@@ -104,11 +108,51 @@ export type Messages = {
     searchButton: string
     searching: string
     searchError: string
+    searchRateLimit: string
     searchPrompt: string
     noResults: string
     back: string
     mapHint: string
     cancel: string
+  }
+  onboarding: {
+    mapTitle: string
+    mapHint: string
+    cta: string
+    skip: string
+    dialogTitle: string
+    step1: string
+    step2: string
+    step3: string
+  }
+  help: {
+    title: string
+    intro: string
+    addTitle: string
+    addBody: string
+    exportTitle: string
+    exportBody: string
+    undoTitle: string
+    undoBody: string
+    languageTitle: string
+    languageBody: string
+    shortcutsTitle: string
+    shortcutAdd: string
+    shortcutExport: string
+    shortcutSidebar: string
+    shortcutDark: string
+    shortcutUndo: string
+    shortcutEsc: string
+    shortcutHelp: string
+  }
+  mapLayers: {
+    visited: string
+    wishlist: string
+    countries: string
+    allYears: string
+    year: string
+    countriesLeft: string
+    countriesLeftDone: string
   }
   placeDialog: {
     addTitle: string
@@ -121,20 +165,65 @@ export type Messages = {
     visitedDate: string
     notes: string
     notesPlaceholder: string
+    country: string
+    city: string
+    region: string
+    latitude: string
+    longitude: string
+    locationHint: string
     cancel: string
     save: string
   }
   placePopup: {
     edit: string
+    dragHint: string
+  }
+  backup: {
+    title: string
+    message: string
+    exportNow: string
+    dismiss: string
+  }
+  importDialog: {
+    title: string
+    description: string
+    replace: string
+    merge: string
+    cancel: string
+  }
+  confirm: {
+    cancel: string
+    confirm: string
+    resetTitle: string
+    resetDescription: string
+    resetConfirm: string
+    deleteTitle: string
+    deleteDescription: string
+    deleteConfirm: string
+    duplicateTitle: string
+    duplicateDescription: string
+    duplicateConfirm: string
   }
   export: {
     title: string
     description: string
     previewLabel: string
+    liveMapNote: string
+    applyToLiveMap: string
     visited: string
     wishlist: string
     downloadPng: string
     generating: string
+    progress: string
+    missingTiles: string
+    layout: string
+    landscape: string
+    portrait: string
+    crop: string
+    cropFit: string
+    cropWorld: string
+    showTitle: string
+    showStats: string
     mapTitle: string
     legend: string
     summary: string
@@ -158,13 +247,6 @@ export type Messages = {
     skip: string
     dontShowAgain: string
   }
-  confirm: {
-    cancel: string
-    confirm: string
-    resetTitle: string
-    resetDescription: string
-    resetConfirm: string
-  }
   error: {
     title: string
     description: string
@@ -173,16 +255,19 @@ export type Messages = {
   }
   toast: {
     geocodeFailed: string
+    geocodeRateLimit: string
     placeUpdated: string
     placeAdded: string
     placeDeleted: string
     undo: string
     placeRestored: string
+    actionUndone: string
     mapDownloaded: string
     mapGenerateFailed: string
     dataExported: string
     invalidImport: string
     imported: string
+    importedMerge: string
     importFailed: string
     resetDone: string
   }

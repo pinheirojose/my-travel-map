@@ -1,5 +1,6 @@
 import type { Place, PlaceStatus, TravelStats } from '@/types'
 import {
+  computeCountriesLeft,
   computeWorldVisitedPercent,
   getContinentForCountryCode,
 } from '@/utils/continents'
@@ -29,6 +30,7 @@ export function computeStats(places: Place[]): TravelStats {
     countriesWishlist: wishlistCountries.size,
     continentsVisited: continents.size,
     worldVisitedPercent: computeWorldVisitedPercent(visitedCountries.size),
+    countriesLeft: computeCountriesLeft(visitedCountries.size),
   }
 }
 

@@ -69,10 +69,12 @@ export function PlacePopup({ place, onEdit, onDelete }: PlacePopupProps) {
           variant="outline"
           className="h-7 text-xs text-destructive hover:text-destructive"
           onClick={onDelete}
+          aria-label={t('confirm.deleteConfirm')}
         >
           <Trash2 className="h-3 w-3" />
         </Button>
       </div>
+      <p className="text-[10px] text-muted-foreground">{t('placePopup.dragHint')}</p>
     </div>
   )
 }

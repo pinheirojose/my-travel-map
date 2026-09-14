@@ -15,17 +15,34 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ClientOnly } from '@/components/ClientOnly'
 import { WorldMap } from '@/components/map/WorldMap'
 import { MapStylePicker } from '@/components/map/MapStylePicker'
+import { MapLayerControls } from '@/components/map/MapLayerControls'
+import { EmptyMapCta } from '@/components/map/EmptyMapCta'
+import { HelpDialog } from '@/components/help/HelpDialog'
+import { BackupBanner } from '@/components/backup/BackupBanner'
+import { ImportDialog } from '@/components/import/ImportDialog'
 import { reverseGeocode, createFallbackLocation } from '@/services/geocoding'
 import {
   generatePrintableMap,
   buildExportFilename,
   buildJsonExport,
   validateJsonImport,
+  captureMapPreview,
 } from '@/services/export'
 import { getMapStyle } from '@/utils/mapStyles'
+import { findDuplicatePlace } from '@/utils/duplicates'
 import { downloadBlob, readFileAsText } from '@/utils'
-import { SUPPORT_MODAL_INTERVAL } from '@/utils/constants'
-import type { GeocodedLocation, Place, PlaceDraft } from '@/types'
+import {
+  BACKUP_REMINDER_THRESHOLD,
+  SUPPORT_MODAL_INTERVAL,
+} from '@/utils/constants'
+import type {
+  AppPreferences,
+  ExportPrintOptions,
+  GeocodedLocation,
+  MapStyleId,
+  Place,
+  PlaceDraft,
+} from '@/types'
 import type { PlaceSearchResult } from '@/services/geocoding'
 
 export function HomePage() {
@@ -35,14 +52,32 @@ export function HomePage() {
   const [exportModalOpen, setExportModalOpen] = useState(false)
   const [supportModalOpen, setSupportModalOpen] = useState(false)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Place | null>(null)
+  const [pendingDuplicate, setPendingDuplicate] = useState<PlaceDraft | null>(
+    null,
+  )
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
-  const [pendingLocation, setPendingLocation] = useState<GeocodedLocation | null>(null)
+  const [exportProgress, setExportProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
+  const [pendingLocation, setPendingLocation] = useState<GeocodedLocation | null>(
+    null,
+  )
   const [editingPlace, setEditingPlace] = useState<Place | null>(null)
   const [flyToTarget, setFlyToTarget] = useState<{
     lat: number
     lng: number
     zoom?: number
+  } | null>(null)
+  const [fitRequestId, setFitRequestId] = useState(0)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [pendingImport, setPendingImport] = useState<{
+    places: Place[]
+    mapViewport?: { center: [number, number]; zoom: number }
+    preferences?: Partial<AppPreferences>
   } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -60,38 +95,53 @@ export function HomePage() {
   const addPlace = useTravelMapStore((s) => s.addPlace)
   const updatePlace = useTravelMapStore((s) => s.updatePlace)
   const deletePlace = useTravelMapStore((s) => s.deletePlace)
-  const undoDelete = useTravelMapStore((s) => s.undoDelete)
+  const undo = useTravelMapStore((s) => s.undo)
   const resetAll = useTravelMapStore((s) => s.resetAll)
   const importData = useTravelMapStore((s) => s.importData)
   const setSidebarOpen = useTravelMapStore((s) => s.setSidebarOpen)
   const setSelectedMapStyle = useTravelMapStore((s) => s.setSelectedMapStyle)
   const incrementDownloadCount = useTravelMapStore((s) => s.incrementDownloadCount)
   const setHideSupportModal = useTravelMapStore((s) => s.setHideSupportModal)
+  const completeOnboarding = useTravelMapStore((s) => s.completeOnboarding)
+  const dismissBackupReminder = useTravelMapStore((s) => s.dismissBackupReminder)
+  const markJsonBackup = useTravelMapStore((s) => s.markJsonBackup)
 
   const { darkMode, toggleDarkMode } = useDarkMode()
   const stats = useTravelStats()
   const { t, locale } = useTranslation()
 
+  const showBackupBanner =
+    places.length >= BACKUP_REMINDER_THRESHOLD &&
+    !preferences.hideBackupReminder &&
+    places.length > preferences.lastJsonBackupPlaceCount
+
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
 
-  const handleMapClick = useCallback(async (lat: number, lng: number) => {
-    setPlaceDialogOpen(true)
-    setEditingPlace(null)
-    setIsGeocoding(true)
-    setPendingLocation(null)
+  const handleMapClick = useCallback(
+    async (lat: number, lng: number) => {
+      setPlaceDialogOpen(true)
+      setEditingPlace(null)
+      setIsGeocoding(true)
+      setPendingLocation(null)
 
-    try {
-      const location = await reverseGeocode(lat, lng, locale)
-      setPendingLocation(location)
-    } catch {
-      setPendingLocation(createFallbackLocation(lat, lng))
-      toast.error(t('toast.geocodeFailed'))
-    } finally {
-      setIsGeocoding(false)
-    }
-  }, [locale, t])
+      try {
+        const location = await reverseGeocode(lat, lng, locale)
+        setPendingLocation(location)
+      } catch (err) {
+        setPendingLocation(createFallbackLocation(lat, lng))
+        toast.error(
+          err instanceof Error && err.message === 'RATE_LIMIT'
+            ? t('toast.geocodeRateLimit')
+            : t('toast.geocodeFailed'),
+        )
+      } finally {
+        setIsGeocoding(false)
+      }
+    },
+    [locale, t],
+  )
 
   const handleSearchResult = useCallback((result: PlaceSearchResult) => {
     setAddMode(false)
@@ -109,7 +159,7 @@ export function HomePage() {
     setFlyToTarget(null)
   }, [])
 
-  const handleSavePlace = useCallback(
+  const commitPlace = useCallback(
     (draft: PlaceDraft) => {
       if (editingPlace) {
         updatePlace(editingPlace.id, draft)
@@ -121,8 +171,21 @@ export function HomePage() {
       }
       setEditingPlace(null)
       setPendingLocation(null)
+      setPendingDuplicate(null)
     },
     [editingPlace, addPlace, updatePlace, t],
+  )
+
+  const handleSavePlace = useCallback(
+    (draft: PlaceDraft) => {
+      const duplicate = findDuplicatePlace(places, draft, editingPlace?.id)
+      if (duplicate) {
+        setPendingDuplicate(draft)
+        return
+      }
+      commitPlace(draft)
+    },
+    [places, editingPlace, commitPlace],
   )
 
   const handleEditPlace = useCallback((place: Place) => {
@@ -131,31 +194,50 @@ export function HomePage() {
     setPlaceDialogOpen(true)
   }, [])
 
-  const handleDeletePlace = useCallback(
-    (id: string) => {
-      const deleted = deletePlace(id)
-      if (deleted) {
-        toast.success(
-          (toastItem) => (
-            <span className="flex items-center gap-2">
-              {deleted.name} {t('toast.placeDeleted')}
-              <button
-                onClick={() => {
-                  undoDelete()
-                  toast.dismiss(toastItem.id)
-                  toast.success(t('toast.placeRestored'))
-                }}
-                className="underline font-medium cursor-pointer"
-              >
-                {t('toast.undo')}
-              </button>
-            </span>
-          ),
-          { duration: 5000 },
-        )
+  const confirmDelete = useCallback(() => {
+    if (!deleteTarget) return
+    const deleted = deletePlace(deleteTarget.id)
+    setDeleteTarget(null)
+    if (deleted) {
+      toast.success(
+        (toastItem) => (
+          <span className="flex items-center gap-2">
+            {deleted.name} {t('toast.placeDeleted')}
+            <button
+              onClick={() => {
+                undo()
+                toast.dismiss(toastItem.id)
+                toast.success(t('toast.placeRestored'))
+              }}
+              className="underline font-medium cursor-pointer"
+            >
+              {t('toast.undo')}
+            </button>
+          </span>
+        ),
+        { duration: 5000 },
+      )
+    }
+  }, [deleteTarget, deletePlace, undo, t])
+
+  const handlePlaceMoved = useCallback(
+    async (place: Place, lat: number, lng: number) => {
+      try {
+        const location = await reverseGeocode(lat, lng, locale)
+        updatePlace(place.id, {
+          latitude: lat,
+          longitude: lng,
+          city: location.city || place.city,
+          region: location.region || place.region,
+          country: location.country || place.country,
+          countryCode: location.countryCode || place.countryCode,
+        })
+      } catch {
+        updatePlace(place.id, { latitude: lat, longitude: lng })
       }
+      toast.success(t('toast.placeUpdated'))
     },
-    [deletePlace, undoDelete, t],
+    [locale, updatePlace, t],
   )
 
   const initiateDownload = useCallback(() => {
@@ -171,52 +253,78 @@ export function HomePage() {
     }
   }, [preferences.downloadCount, preferences.hideSupportModal])
 
+  useEffect(() => {
+    if (!exportModalOpen) {
+      setPreviewUrl(null)
+      return
+    }
+    const el = document.querySelector('.leaflet-container') as HTMLElement | null
+    if (!el) return
+    void captureMapPreview(el)
+      .then(setPreviewUrl)
+      .catch(() => setPreviewUrl(null))
+  }, [exportModalOpen])
+
   const handleSupportSkip = useCallback(() => {
     setExportModalOpen(true)
   }, [])
 
-  const handleDownload = useCallback(async () => {
-    setIsExporting(true)
-    try {
-      const style = getMapStyle(preferences.selectedMapStyle)
-      const blob = await generatePrintableMap(places, style, stats, {
-        mapTitle: t('export.mapTitle'),
-        legend: t('export.legend'),
-        summary: t('export.summary'),
-        visited: t('export.visited'),
-        wishlist: t('export.wishlist'),
-        totalPlaces: t('export.totalPlaces'),
-        visitedCount: t('export.visitedCount'),
-        wishlistCount: t('export.wishlistCount'),
-        countriesVisited: t('export.countriesVisited'),
-        continentsVisited: t('export.continentsVisited'),
-        worldVisitedPercent: t('export.worldVisitedPercent'),
-        generated: t('export.generated'),
-      })
-      downloadBlob(blob, buildExportFilename())
-      incrementDownloadCount()
-      setExportModalOpen(false)
-      toast.success(t('toast.mapDownloaded'))
-    } catch {
-      toast.error(t('toast.mapGenerateFailed'))
-    } finally {
-      setIsExporting(false)
-    }
-  }, [places, preferences.selectedMapStyle, stats, incrementDownloadCount, t])
+  const handleDownload = useCallback(
+    async (styleId: MapStyleId, options: ExportPrintOptions) => {
+      setIsExporting(true)
+      setExportProgress({ done: 0, total: 0 })
+      try {
+        const style = getMapStyle(styleId)
+        const result = await generatePrintableMap(
+          places,
+          style,
+          stats,
+          {
+            mapTitle: t('export.mapTitle'),
+            legend: t('export.legend'),
+            summary: t('export.summary'),
+            visited: t('export.visited'),
+            wishlist: t('export.wishlist'),
+            totalPlaces: t('export.totalPlaces'),
+            visitedCount: t('export.visitedCount'),
+            wishlistCount: t('export.wishlistCount'),
+            countriesVisited: t('export.countriesVisited'),
+            continentsVisited: t('export.continentsVisited'),
+            worldVisitedPercent: t('export.worldVisitedPercent'),
+            generated: t('export.generated'),
+          },
+          options,
+          (done, total) => setExportProgress({ done, total }),
+        )
+        downloadBlob(result.blob, buildExportFilename())
+        incrementDownloadCount()
+        setExportModalOpen(false)
+        toast.success(t('toast.mapDownloaded'))
+        if (result.missingTiles > 0) {
+          toast.error(t('export.missingTiles', { count: result.missingTiles }))
+        }
+      } catch {
+        toast.error(t('toast.mapGenerateFailed'))
+      } finally {
+        setIsExporting(false)
+        setExportProgress(null)
+      }
+    },
+    [places, stats, incrementDownloadCount, t],
+  )
 
   const handleExportJson = useCallback(() => {
-    const data = buildJsonExport(places, mapViewport, {
-      darkMode: preferences.darkMode,
-      hideSupportModal: preferences.hideSupportModal,
-      downloadCount: preferences.downloadCount,
-      selectedMapStyle: preferences.selectedMapStyle,
-    })
+    const data = buildJsonExport(places, mapViewport, preferences)
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: 'application/json',
     })
-    downloadBlob(blob, `travel-map-export-${new Date().toISOString().slice(0, 10)}.json`)
+    downloadBlob(
+      blob,
+      `travel-map-export-${new Date().toISOString().slice(0, 10)}.json`,
+    )
+    markJsonBackup()
     toast.success(t('toast.dataExported'))
-  }, [places, mapViewport, preferences, t])
+  }, [places, mapViewport, preferences, markJsonBackup, t])
 
   const handleImportJson = useCallback(() => {
     fileInputRef.current?.click()
@@ -233,14 +341,35 @@ export function HomePage() {
           toast.error(t('toast.invalidImport'))
           return
         }
-        importData(data.places, data.mapViewport)
-        toast.success(t('toast.imported', { count: data.places.length }))
+        setPendingImport({
+          places: data.places,
+          mapViewport: data.mapViewport,
+          preferences: data.preferences as Partial<AppPreferences> | undefined,
+        })
       } catch {
         toast.error(t('toast.importFailed'))
       }
       e.target.value = ''
     },
-    [importData, t],
+    [t],
+  )
+
+  const applyImport = useCallback(
+    (mode: 'replace' | 'merge') => {
+      if (!pendingImport) return
+      importData(pendingImport.places, {
+        viewport: pendingImport.mapViewport,
+        preferences: pendingImport.preferences,
+        mode,
+      })
+      toast.success(
+        mode === 'merge'
+          ? t('toast.importedMerge', { count: pendingImport.places.length })
+          : t('toast.imported', { count: pendingImport.places.length }),
+      )
+      setPendingImport(null)
+    },
+    [pendingImport, importData, t],
   )
 
   useKeyboardShortcuts({
@@ -249,6 +378,7 @@ export function HomePage() {
     onExport: initiateDownload,
     onToggleSidebar: () => setSidebarOpen(!preferences.sidebarOpen),
     onToggleDarkMode: toggleDarkMode,
+    onHelp: () => setHelpOpen(true),
   })
 
   return (
@@ -263,6 +393,7 @@ export function HomePage() {
         onImportJson={handleImportJson}
         onToggleDarkMode={toggleDarkMode}
         onToggleSidebar={() => setSidebarOpen(!preferences.sidebarOpen)}
+        onHelp={() => setHelpOpen(true)}
       />
 
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -271,16 +402,38 @@ export function HomePage() {
             <WorldMap
               onMapClick={handleMapClick}
               onEditPlace={handleEditPlace}
-              onDeletePlace={handleDeletePlace}
+              onDeletePlace={(id) => {
+                const place = places.find((p) => p.id === id) ?? null
+                setDeleteTarget(place)
+              }}
+              onPlaceMoved={handlePlaceMoved}
               addMode={addMode}
               flyToTarget={flyToTarget}
               onFlyToComplete={clearFlyToTarget}
+              fitRequestId={fitRequestId}
             />
           </ClientOnly>
 
-          <div className="absolute bottom-4 left-4 z-[1000]">
+          <div className="absolute bottom-4 left-4 z-[1000] flex flex-col gap-2">
             <MapStylePicker variant="map" />
+            <MapLayerControls
+              onFitPlaces={() => setFitRequestId((n) => n + 1)}
+            />
           </div>
+
+          {places.length === 0 && !preferences.hasCompletedOnboarding && !addMode && (
+            <EmptyMapCta
+              onAddPlace={openAddChooser}
+              onSkip={completeOnboarding}
+            />
+          )}
+
+          {showBackupBanner && !addMode && (
+            <BackupBanner
+              onExport={handleExportJson}
+              onDismiss={dismissBackupReminder}
+            />
+          )}
 
           {addMode && (
             <motion.div
@@ -339,9 +492,24 @@ export function HomePage() {
         open={exportModalOpen}
         onOpenChange={setExportModalOpen}
         selectedStyle={preferences.selectedMapStyle}
-        onStyleChange={setSelectedMapStyle}
+        liveStyle={preferences.selectedMapStyle}
+        onApplyLiveStyle={setSelectedMapStyle}
         onDownload={handleDownload}
         isExporting={isExporting}
+        exportProgress={exportProgress}
+        previewUrl={previewUrl}
+      />
+
+      <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+
+      <ImportDialog
+        open={Boolean(pendingImport)}
+        count={pendingImport?.places.length ?? 0}
+        onOpenChange={(open) => {
+          if (!open) setPendingImport(null)
+        }}
+        onReplace={() => applyImport('replace')}
+        onMerge={() => applyImport('merge')}
       />
 
       <ConfirmDialog
@@ -354,6 +522,33 @@ export function HomePage() {
         onConfirm={() => {
           resetAll()
           toast.success(t('toast.resetDone'))
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        title={t('confirm.deleteTitle')}
+        description={t('confirm.deleteDescription')}
+        confirmLabel={t('confirm.deleteConfirm')}
+        destructive
+        onConfirm={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDuplicate)}
+        onOpenChange={(open) => {
+          if (!open) setPendingDuplicate(null)
+        }}
+        title={t('confirm.duplicateTitle')}
+        description={t('confirm.duplicateDescription', {
+          name: pendingDuplicate?.name ?? '',
+        })}
+        confirmLabel={t('confirm.duplicateConfirm')}
+        onConfirm={() => {
+          if (pendingDuplicate) commitPlace(pendingDuplicate)
         }}
       />
 

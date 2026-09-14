@@ -74,11 +74,15 @@ export function AddPlaceChooser({
       if (id !== requestId.current) return
       setResults(found)
       setHasSearched(true)
-    } catch {
+    } catch (err) {
       if (id !== requestId.current) return
       setResults([])
       setHasSearched(true)
-      setError(t('addPlace.searchError'))
+      setError(
+        err instanceof Error && err.message === 'RATE_LIMIT'
+          ? t('addPlace.searchRateLimit')
+          : t('addPlace.searchError'),
+      )
     } finally {
       if (id === requestId.current) setIsSearching(false)
     }

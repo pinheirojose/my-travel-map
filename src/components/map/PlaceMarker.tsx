@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import type { Place } from '@/types'
-import { CATEGORY_CONFIG, STATUS_CONFIG } from '@/utils/constants'
+import { STATUS_CONFIG } from '@/utils/constants'
 
 const CATEGORY_EMOJI: Record<string, string> = {
   city: '🏙',
@@ -63,8 +63,20 @@ export function createPlaceIcon(
   })
 }
 
-export function getCategoryLabel(category: Place['category']): string {
-  return CATEGORY_CONFIG[category].label
+export function createClusterIcon(count: number, color: string): L.DivIcon {
+  const size = count > 50 ? 48 : count > 12 ? 42 : 36
+  return L.divIcon({
+    className: 'custom-cluster',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${color};border:2.5px solid white;
+      box-shadow:0 2px 8px rgba(0,0,0,0.25);
+      display:flex;align-items:center;justify-center;
+      color:white;font-size:13px;font-weight:600;font-family:Inter,sans-serif;
+    ">${count}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  })
 }
 
 export function getStatusLabel(status: Place['status']): string {

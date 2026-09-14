@@ -102,3 +102,7 @@ export function computeWorldVisitedPercent(countriesVisited: number): number {
     Math.round((countriesVisited / TOTAL_WORLD_COUNTRIES) * 1000) / 10,
   )
 }
+
+export function computeCountriesLeft(countriesVisited: number): number {
+  return Math.max(0, TOTAL_WORLD_COUNTRIES - Math.max(0, countriesVisited))
+}

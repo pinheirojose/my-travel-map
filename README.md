@@ -7,7 +7,7 @@ A premium personal travel map application. Mark places you've visited or dream o
 - **Interactive World Map** — Click anywhere to add places with automatic reverse geocoding
 - **Place Management** — Organize by status (Visited / Wishlist), category, and country
 - **Smart Sidebar** — Search, filter, sort, and browse places grouped by country
-- **Printable Exports** — Ultra high-resolution PNG with 6 map styles
+- **Printable Exports** — Ultra high-resolution PNG with 7 map styles, layout options, and live preview
 - **Data Portability** — Export and import your data as JSON
 - **Dark Mode** — Beautiful light and dark themes
 - **Keyboard Shortcuts** — ⌘N add, ⌘E export, ⌘B sidebar, ⌘D dark mode, ⌘Z undo
@@ -47,8 +47,9 @@ npm run preview
 | ⌘E | Download printable map |
 | ⌘B | Toggle sidebar (mobile) |
 | ⌘D | Toggle dark mode |
-| ⌘Z | Undo delete |
-| Esc | Deselect place |
+| ⌘Z | Undo last action |
+| ⌘/ | Help |
+| Esc | Deselect place / exit add mode |
 
 ## License
 

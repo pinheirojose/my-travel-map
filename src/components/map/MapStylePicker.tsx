@@ -44,7 +44,7 @@ export function MapStylePicker({ variant = 'toolbar' }: MapStylePickerProps) {
                 className={cn(
                   'h-8 gap-1.5',
                   variant === 'map' &&
-                    'shadow-md border border-border/80 bg-card/95 backdrop-blur-sm',
+                    'shadow-md border border-border bg-card hover:bg-card',
                 )}
                 aria-label={t('toolbar.mapStyle')}
               >

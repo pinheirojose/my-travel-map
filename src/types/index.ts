@@ -105,6 +105,7 @@ export interface TravelStats {
   countriesWishlist: number
   continentsVisited: number
   worldVisitedPercent: number
+  countriesLeft: number
 }
 
 export interface SupportLinks {
@@ -116,6 +117,22 @@ export interface SupportLinks {
 
 export type AppLocale = 'en' | 'pt-PT'
 
+export type HistoryEntry =
+  | { kind: 'add'; id: string }
+  | { kind: 'delete'; place: Place }
+  | { kind: 'update'; place: Place }
+  | { kind: 'snapshot'; places: Place[]; mapViewport: MapViewport }
+
+export type ExportLayout = 'landscape' | 'portrait'
+export type ExportCrop = 'world' | 'fit'
+
+export interface ExportPrintOptions {
+  layout: ExportLayout
+  crop: ExportCrop
+  showTitle: boolean
+  showStats: boolean
+}
+
 export interface AppPreferences {
   darkMode: boolean
   hideSupportModal: boolean
@@ -123,6 +140,13 @@ export interface AppPreferences {
   selectedMapStyle: MapStyleId
   sidebarOpen: boolean
   locale: AppLocale
+  showVisited: boolean
+  showWishlist: boolean
+  showCountryFill: boolean
+  yearFilter: number | null
+  hideBackupReminder: boolean
+  lastJsonBackupPlaceCount: number
+  hasCompletedOnboarding: boolean
 }
 
 export interface TravelMapState {
@@ -132,7 +156,6 @@ export interface TravelMapState {
   selectedPlaceId: string | null
   sidebarFilters: SidebarFilters
   recentlyAddedIds: string[]
-  deletedPlaceBackup: Place | null
 }
 
 export interface SidebarFilters {
@@ -148,5 +171,5 @@ export interface TravelMapExport {
   exportedAt: string
   places: Place[]
   mapViewport: MapViewport
-  preferences: Omit<AppPreferences, 'sidebarOpen'>
+  preferences: Partial<AppPreferences>
 }

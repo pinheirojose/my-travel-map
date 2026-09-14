@@ -81,7 +81,25 @@
 
 .leaflet-control-attribution {
   font-size: 10px !important;
-  opacity: 0.6;
+  background: var(--color-card) !important;
+  color: var(--color-card-foreground) !important;
+  opacity: 1;
+}
+
+.leaflet-bar {
+  border: 1px solid var(--color-border) !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.2) !important;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--color-card) !important;
+  color: var(--color-card-foreground) !important;
+  border-bottom-color: var(--color-border) !important;
+}
+
+.leaflet-bar a:hover {
+  background: var(--color-accent) !important;
 }
 
 .custom-marker {
