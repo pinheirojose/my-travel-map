@@ -154,7 +154,7 @@ export function WorldMap({
         key={style.id}
         attribution={style.tileAttribution}
         url={style.tileUrl}
-        subdomains="abcd"
+        subdomains={style.tileSubdomains ?? 'abc'}
         maxZoom={19}
       />
       <MapEventHandler onMapClick={onMapClick} addMode={addMode} />

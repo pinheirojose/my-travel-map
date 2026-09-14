@@ -188,7 +188,7 @@ async function fetchTileBlobUrl(
 ): Promise<string | null> {
   const buildUrl = (retina: boolean) =>
     template
-      .replace('{s}', ['a', 'b', 'c', 'd'][Math.abs(x + y) % 4])
+      .replace('{s}', ['a', 'b', 'c'][Math.abs(x + y) % 3])
       .replace('{z}', String(z))
       .replace('{x}', String(x))
       .replace('{y}', String(y))

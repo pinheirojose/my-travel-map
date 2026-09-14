@@ -84,6 +84,7 @@ export interface MapStyleDefinition {
   description: string
   tileUrl: string
   tileAttribution: string
+  tileSubdomains?: string
   exportBackground: string
   exportTextColor: string
   exportAccentColor: string

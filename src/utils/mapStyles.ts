@@ -118,7 +118,7 @@ export const MAP_STYLES: MapStyleDefinition[] = [
     name: 'Modern Minimal',
     emoji: '📍',
     description: 'Ultra-clean style with subtle borders and modern aesthetics.',
-    tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     tileAttribution: '&copy; OpenStreetMap contributors',
     exportBackground: '#f8fafc',
     exportTextColor: '#0f172a',
