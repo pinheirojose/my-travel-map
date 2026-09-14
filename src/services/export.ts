@@ -347,12 +347,29 @@ const DEFAULT_EXPORT_LABELS: ExportLabels = {
   generated: 'Generated',
 }
 
+async function ensureExportFonts(style: MapStyleDefinition): Promise<void> {
+  if (typeof document === 'undefined' || !document.fonts) return
+  try {
+    await document.fonts.ready
+    await Promise.all([
+      document.fonts.load(`600 88px ${style.exportTitleFont}`),
+      document.fonts.load(`700 56px ${style.exportTitleFont}`),
+      document.fonts.load(`500 22px ${style.exportBodyFont}`),
+      document.fonts.load(`400 24px ${style.exportBodyFont}`),
+    ])
+  } catch {
+    // Fall back to whatever the browser already has loaded.
+  }
+}
+
 export async function generatePrintableMap(
   places: Place[],
   style: MapStyleDefinition,
   stats: TravelStats,
   labels: ExportLabels = DEFAULT_EXPORT_LABELS,
 ): Promise<Blob> {
+  await ensureExportFonts(style)
+
   const canvas = document.createElement('canvas')
   canvas.width = EXPORT_WIDTH
   canvas.height = EXPORT_HEIGHT
@@ -407,9 +424,16 @@ export async function generatePrintableMap(
   }
 
   ctx.fillStyle = style.exportTextColor
-  ctx.font = `700 72px ${style.exportTitleFont}`
+  ctx.font = `600 88px ${style.exportTitleFont}`
   ctx.textAlign = 'center'
-  ctx.fillText(labels.mapTitle, EXPORT_WIDTH / 2, 100)
+  ctx.textBaseline = 'alphabetic'
+  if ('letterSpacing' in ctx) {
+    ctx.letterSpacing = '6px'
+  }
+  ctx.fillText(labels.mapTitle, EXPORT_WIDTH / 2, 108)
+  if ('letterSpacing' in ctx) {
+    ctx.letterSpacing = '0px'
+  }
 
   const legendY = EXPORT_HEIGHT - 260
   const legendX = 100
@@ -479,7 +503,7 @@ export async function generatePrintableMap(
 
     ctx.textAlign = 'center'
     ctx.fillStyle = style.exportTextColor
-    ctx.font = `700 56px ${style.exportTitleFont}`
+    ctx.font = `600 56px ${style.exportTitleFont}`
     ctx.fillText(stat.value, x + statsWidth / 2, legendY + 88)
 
     ctx.fillStyle = style.exportSecondaryColor
