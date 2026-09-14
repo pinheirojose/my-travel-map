@@ -26,8 +26,10 @@ export type Messages = {
     downloadTooltip: string
     export: string
     exportTooltip: string
+    exportHelp: string
     import: string
     importTooltip: string
+    importHelp: string
     reset: string
     darkMode: string
     lightMode: string

@@ -19,8 +19,12 @@ const en: Messages = {
     downloadTooltip: 'Download Map (⌘E)',
     export: 'Export',
     exportTooltip: 'Export JSON',
+    exportHelp:
+      'Download a backup of all your places as a JSON file. You can keep it, share it, or restore it later with Import.',
     import: 'Import',
     importTooltip: 'Import JSON',
+    importHelp:
+      'Load places from a JSON file previously exported from Travel Map. This replaces your current list.',
     reset: 'Reset All',
     darkMode: 'Dark Mode (⌘D)',
     lightMode: 'Light Mode (⌘D)',

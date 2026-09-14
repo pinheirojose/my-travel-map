@@ -84,6 +84,7 @@ export function Toolbar({
 
           <ToolbarButton
             tooltip={t('toolbar.exportTooltip')}
+            description={t('toolbar.exportHelp')}
             onClick={onExportJson}
           >
             <FileJson className="h-4 w-4" />
@@ -92,6 +93,7 @@ export function Toolbar({
 
           <ToolbarButton
             tooltip={t('toolbar.importTooltip')}
+            description={t('toolbar.importHelp')}
             onClick={onImportJson}
           >
             <Upload className="h-4 w-4" />
@@ -132,6 +134,7 @@ export function Toolbar({
 function ToolbarButton({
   children,
   tooltip,
+  description,
   onClick,
   active,
   variant = 'outline',
@@ -139,6 +142,7 @@ function ToolbarButton({
 }: {
   children: React.ReactNode
   tooltip: string
+  description?: string
   onClick: () => void
   active?: boolean
   variant?: 'outline' | 'ghost'
@@ -160,8 +164,13 @@ function ToolbarButton({
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">
-        <p>{tooltip}</p>
+      <TooltipContent side="bottom" className={description ? 'max-w-[240px]' : undefined}>
+        <p className="font-medium">{tooltip}</p>
+        {description && (
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            {description}
+          </p>
+        )}
       </TooltipContent>
     </Tooltip>
   )

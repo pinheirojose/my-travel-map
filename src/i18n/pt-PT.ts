@@ -19,8 +19,12 @@ const ptPT: Messages = {
     downloadTooltip: 'Descarregar mapa (⌘E)',
     export: 'Exportar',
     exportTooltip: 'Exportar JSON',
+    exportHelp:
+      'Descarregue uma cópia de segurança de todos os seus locais num ficheiro JSON. Pode guardá-la, partilhá-la ou restaurá-la mais tarde com Importar.',
     import: 'Importar',
     importTooltip: 'Importar JSON',
+    importHelp:
+      'Carregue locais a partir de um ficheiro JSON exportado anteriormente do Travel Map. Isto substitui a lista atual.',
     reset: 'Repor tudo',
     darkMode: 'Modo escuro (⌘D)',
     lightMode: 'Modo claro (⌘D)',
