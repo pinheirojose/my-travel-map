@@ -68,5 +68,5 @@ export const SUPPORT_LINKS = {
   buyMeACoffee: 'https://buymeacoffee.com',
   kofi: 'https://ko-fi.com',
   githubSponsors: 'https://github.com/sponsors',
-  stripe: 'https://stripe.com',
+  stripe: 'https://donate.stripe.com/9B628r02W7mk4hna4ibsc00',
 }

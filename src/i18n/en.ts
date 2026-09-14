@@ -166,8 +166,10 @@ const en: Messages = {
     message2:
       'Your contribution helps fund new features, map improvements and long-term maintenance.',
     message3: 'Supporting the project is completely optional, but greatly appreciated.',
+    donate: '💚 Donate',
     buyMeACoffee: '❤️ Buy Me a Coffee',
     contribute: '💚 Contribute',
+    unavailable: 'Not available yet',
     skip: 'Skip and Download',
     dontShowAgain: "Don't show this again",
   },

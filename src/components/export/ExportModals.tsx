@@ -67,16 +67,28 @@ export function SupportModal({
 
         <div className="relative flex flex-col gap-2 pt-2">
           <Button
-            className="w-full bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black font-medium"
-            onClick={() => window.open(SUPPORT_LINKS.buyMeACoffee, '_blank')}
+            className="w-full bg-emerald-600 hover:bg-emerald-600/90 text-white font-medium"
+            onClick={() => window.open(SUPPORT_LINKS.stripe, '_blank')}
           >
-            {t('support.buyMeACoffee')}
+            {t('support.donate')}
           </Button>
           <Button
-            className="w-full bg-emerald-600 hover:bg-emerald-600/90 text-white font-medium"
-            onClick={() => window.open(SUPPORT_LINKS.kofi, '_blank')}
+            disabled
+            className="w-full bg-[#FFDD00]/50 text-black/60 font-medium"
+          >
+            {t('support.buyMeACoffee')}
+            <span className="text-[11px] font-normal opacity-80">
+              ({t('support.unavailable')})
+            </span>
+          </Button>
+          <Button
+            disabled
+            className="w-full bg-emerald-600/40 text-white/70 font-medium"
           >
             {t('support.contribute')}
+            <span className="text-[11px] font-normal opacity-80">
+              ({t('support.unavailable')})
+            </span>
           </Button>
           <Button
             variant="ghost"

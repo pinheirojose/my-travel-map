@@ -149,8 +149,10 @@ export type Messages = {
     message1: string
     message2: string
     message3: string
+    donate: string
     buyMeACoffee: string
     contribute: string
+    unavailable: string
     skip: string
     dontShowAgain: string
   }

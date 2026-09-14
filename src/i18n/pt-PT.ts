@@ -166,8 +166,10 @@ const ptPT: Messages = {
     message2:
       'O seu contributo ajuda a financiar novas funcionalidades, melhorias no mapa e manutenção a longo prazo.',
     message3: 'Apoiar o projeto é totalmente opcional, mas muito apreciado.',
+    donate: '💚 Doar',
     buyMeACoffee: '❤️ Oferece-me um café',
     contribute: '💚 Contribuir',
+    unavailable: 'Ainda não disponível',
     skip: 'Ignorar e descarregar',
     dontShowAgain: 'Não mostrar novamente',
   },
