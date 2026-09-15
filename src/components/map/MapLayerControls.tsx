@@ -25,10 +25,12 @@ export function MapLayerControls({ onFitPlaces }: MapLayerControlsProps) {
     prefs.yearFilter == null ? years.length : years.indexOf(prefs.yearFilter)
 
   useEffect(() => {
-    if (prefs.yearFilter != null && !years.includes(prefs.yearFilter)) {
+    if (prefs.yearFilter == null || yearsKey.length === 0) return
+    const validYears = yearsKey.split(',').map(Number)
+    if (!validYears.includes(prefs.yearFilter)) {
       setMapLayer({ yearFilter: null })
     }
-  }, [prefs.yearFilter, yearsKey, years, setMapLayer])
+  }, [prefs.yearFilter, yearsKey, setMapLayer])
 
   return (
     <div className="flex flex-col gap-2">

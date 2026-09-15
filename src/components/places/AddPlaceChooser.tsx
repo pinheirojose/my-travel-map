@@ -112,8 +112,9 @@ export function AddPlaceChooser({
             <button
               type="button"
               onClick={() => {
-                onChooseMapClick()
                 onOpenChange(false)
+                // Defer add mode until the dialog unmounts to avoid mobile tap-through.
+                window.setTimeout(() => onChooseMapClick(), 0)
               }}
               className={cn(
                 'flex items-start gap-3 rounded-xl border border-border p-4 text-left transition-all',

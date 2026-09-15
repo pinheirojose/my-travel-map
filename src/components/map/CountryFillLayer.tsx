@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { GeoJSON, useMap } from 'react-leaflet'
 import type { PathOptions } from 'leaflet'
 import toast from 'react-hot-toast'
@@ -41,61 +41,84 @@ export function CountryFillLayer() {
     }
   }, [show, t])
 
-  const visible = mapVisiblePlaces(places, {
-    showVisited,
-    showWishlist,
-    yearFilter,
-  })
-
-  const visited = new Set(
-    visible
-      .filter((p) => p.status === 'visited' && p.countryCode)
-      .map((p) => p.countryCode.toUpperCase()),
+  const visible = useMemo(
+    () =>
+      mapVisiblePlaces(places, {
+        showVisited,
+        showWishlist,
+        yearFilter,
+      }),
+    [places, showVisited, showWishlist, yearFilter],
   )
-  const wishlist = new Set(
-    visible
-      .filter((p) => p.status === 'wishlist' && p.countryCode)
-      .map((p) => p.countryCode.toUpperCase()),
+
+  const { visited, wishlist, visitedKey, wishlistKey } = useMemo(() => {
+    const visitedCodes = new Set<string>()
+    const wishlistCodes = new Set<string>()
+    for (const place of visible) {
+      const code = place.countryCode?.toUpperCase()
+      if (!code) continue
+      if (place.status === 'visited') visitedCodes.add(code)
+      if (place.status === 'wishlist') wishlistCodes.add(code)
+    }
+    return {
+      visited: visitedCodes,
+      wishlist: wishlistCodes,
+      visitedKey: [...visitedCodes].sort().join(','),
+      wishlistKey: [...wishlistCodes].sort().join(','),
+    }
+  }, [visible])
+
+  const geoStyle = useCallback(
+    (feature?: CountryFeature): PathOptions => {
+      const code = countryIso2(feature?.properties)
+      if (visited.has(code)) {
+        return {
+          fillColor: style.markerVisitedColor,
+          fillOpacity: 0.28,
+          color: style.markerVisitedColor,
+          weight: 1,
+          opacity: 0.7,
+        }
+      }
+      if (wishlist.has(code)) {
+        return {
+          fillColor: style.markerWishlistColor,
+          fillOpacity: 0.18,
+          color: style.markerWishlistColor,
+          weight: 1,
+          opacity: 0.5,
+        }
+      }
+      return {
+        fillOpacity: 0,
+        opacity: 0,
+        weight: 0,
+      }
+    },
+    [
+      visited,
+      wishlist,
+      style.markerVisitedColor,
+      style.markerWishlistColor,
+    ],
+  )
+
+  const geoFilter = useCallback(
+    (feature: CountryFeature) => {
+      const code = countryIso2(feature.properties)
+      return Boolean(code && (visited.has(code) || wishlist.has(code)))
+    },
+    [visited, wishlist],
   )
 
   if (!show || !geo) return null
 
-  const pathStyle = (feature?: CountryFeature): PathOptions => {
-    const code = countryIso2(feature?.properties)
-    if (visited.has(code)) {
-      return {
-        fillColor: style.markerVisitedColor,
-        fillOpacity: 0.28,
-        color: style.markerVisitedColor,
-        weight: 1,
-        opacity: 0.7,
-      }
-    }
-    if (wishlist.has(code)) {
-      return {
-        fillColor: style.markerWishlistColor,
-        fillOpacity: 0.18,
-        color: style.markerWishlistColor,
-        weight: 1,
-        opacity: 0.5,
-      }
-    }
-    return {
-      fillOpacity: 0,
-      opacity: 0,
-      weight: 0,
-    }
-  }
-
   return (
     <GeoJSON
-      key={`${selectedMapStyle}-${[...visited].join()}-${[...wishlist].join()}`}
+      key={`${selectedMapStyle}-${visitedKey}-${wishlistKey}`}
       data={geo as never}
-      style={(feature) => pathStyle(feature as CountryFeature | undefined)}
-      filter={(feature) => {
-        const code = countryIso2((feature as CountryFeature).properties)
-        return Boolean(code && (visited.has(code) || wishlist.has(code)))
-      }}
+      style={geoStyle as never}
+      filter={geoFilter as never}
       interactive={false}
     />
   )

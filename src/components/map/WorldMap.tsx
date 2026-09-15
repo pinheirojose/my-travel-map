@@ -29,6 +29,18 @@ interface WorldMapProps {
   fitRequestId?: number
 }
 
+function viewportChanged(
+  prev: { center: [number, number]; zoom: number },
+  center: L.LatLng,
+  zoom: number,
+): boolean {
+  return (
+    Math.abs(prev.center[0] - center.lat) > 1e-6 ||
+    Math.abs(prev.center[1] - center.lng) > 1e-6 ||
+    prev.zoom !== zoom
+  )
+}
+
 function MapEventHandler({
   onMapClick,
   addMode,
@@ -52,9 +64,12 @@ function MapEventHandler({
     moveend(e) {
       const target = e.target
       const center = target.getCenter()
+      const zoom = target.getZoom()
+      const prev = useTravelMapStore.getState().mapViewport
+      if (!viewportChanged(prev, center, zoom)) return
       setMapViewport({
         center: [center.lat, center.lng],
-        zoom: target.getZoom(),
+        zoom,
       })
     },
   })
@@ -123,7 +138,10 @@ function CursorStyle({ addMode }: { addMode: boolean }) {
     } else {
       container.style.cursor = ''
     }
+    // Overlay chrome toggles can change map size on mobile; refresh once after layout.
+    const frame = requestAnimationFrame(() => map.invalidateSize())
     return () => {
+      cancelAnimationFrame(frame)
       container.style.cursor = ''
     }
   }, [addMode, map])
@@ -142,7 +160,7 @@ export function WorldMap({
   fitRequestId = 0,
 }: WorldMapProps) {
   const places = useTravelMapStore((s) => s.places)
-  const mapViewport = useTravelMapStore((s) => s.mapViewport)
+  const initialViewportRef = useRef(useTravelMapStore.getState().mapViewport)
   const selectedPlaceId = useTravelMapStore((s) => s.selectedPlaceId)
   const recentlyAddedIds = useTravelMapStore((s) => s.recentlyAddedIds)
   const showVisited = useTravelMapStore((s) => s.preferences.showVisited)
@@ -152,7 +170,7 @@ export function WorldMap({
     (s) => s.preferences.selectedMapStyle,
   )
   const setSelectedPlaceId = useTravelMapStore((s) => s.setSelectedPlaceId)
-  const [zoom, setZoom] = useState(mapViewport.zoom)
+  const [zoom, setZoom] = useState(initialViewportRef.current.zoom)
 
   const style = getMapStyle(selectedMapStyle)
   const filtered = useMemo(
@@ -179,8 +197,8 @@ export function WorldMap({
   return (
     <MapContainer
       key="world-map"
-      center={mapViewport.center}
-      zoom={mapViewport.zoom}
+      center={initialViewportRef.current.center}
+      zoom={initialViewportRef.current.zoom}
       minZoom={2}
       maxZoom={18}
       worldCopyJump
