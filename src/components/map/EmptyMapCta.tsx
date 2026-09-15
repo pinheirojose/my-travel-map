@@ -15,9 +15,9 @@ export function EmptyMapCta({ onAddPlace, onSkip }: EmptyMapCtaProps) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute inset-x-4 top-4 z-[1000] pointer-events-none flex justify-center"
+      className="absolute top-4 left-4 z-[1000] pointer-events-none max-w-sm"
     >
-      <div className="pointer-events-auto max-w-md rounded-2xl border border-border bg-card shadow-lg p-4 text-center">
+      <div className="pointer-events-auto rounded-2xl border border-border bg-card shadow-lg p-4 text-left">
         <h2 className="text-base font-semibold">{t('onboarding.mapTitle')}</h2>
         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
           {t('onboarding.mapHint')}
@@ -27,7 +27,7 @@ export function EmptyMapCta({ onAddPlace, onSkip }: EmptyMapCtaProps) {
           <li>{t('onboarding.step2')}</li>
           <li>{t('onboarding.step3')}</li>
         </ol>
-        <div className="flex items-center justify-center gap-2 mt-4">
+        <div className="flex items-center justify-start gap-2 mt-4">
           <Button size="sm" onClick={onAddPlace}>
             <MapPinPlus className="h-4 w-4" />
             {t('onboarding.cta')}

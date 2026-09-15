@@ -80,6 +80,7 @@ export function HomePage() {
     mapViewport?: { center: [number, number]; zoom: number }
     preferences?: Partial<AppPreferences>
   } | null>(null)
+  const [welcomeOpen, setWelcomeOpen] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const openAddChooser = useCallback(() => {
@@ -103,7 +104,6 @@ export function HomePage() {
   const setSelectedMapStyle = useTravelMapStore((s) => s.setSelectedMapStyle)
   const incrementDownloadCount = useTravelMapStore((s) => s.incrementDownloadCount)
   const setHideSupportModal = useTravelMapStore((s) => s.setHideSupportModal)
-  const completeOnboarding = useTravelMapStore((s) => s.completeOnboarding)
   const dismissBackupReminder = useTravelMapStore((s) => s.dismissBackupReminder)
   const markJsonBackup = useTravelMapStore((s) => s.markJsonBackup)
 
@@ -431,10 +431,13 @@ export function HomePage() {
             />
           </div>
 
-          {places.length === 0 && !preferences.hasCompletedOnboarding && !addMode && (
+          {welcomeOpen && !addMode && (
             <EmptyMapCta
-              onAddPlace={openAddChooser}
-              onSkip={completeOnboarding}
+              onAddPlace={() => {
+                setWelcomeOpen(false)
+                openAddChooser()
+              }}
+              onSkip={() => setWelcomeOpen(false)}
             />
           )}
 
