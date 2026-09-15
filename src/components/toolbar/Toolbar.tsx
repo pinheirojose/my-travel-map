@@ -82,7 +82,7 @@ export function Toolbar({
             <span className="hidden lg:inline text-xs">{t('toolbar.addPlace')}</span>
           </ToolbarButton>
 
-          <div className="hidden sm:block">
+          <div className="block">
             <MapStylePicker variant="toolbar" />
           </div>
         </div>

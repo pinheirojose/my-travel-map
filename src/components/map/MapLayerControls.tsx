@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { useTravelMapStore } from '@/store/travelMapStore'
-import { useTravelStats } from '@/hooks/usePlaces'
+import { useIsMobile, useMapVisibleStats } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 import { visitedYears } from '@/utils/clusterPlaces'
 import { cn } from '@/utils'
@@ -15,9 +16,19 @@ export function MapLayerControls({ onFitPlaces }: MapLayerControlsProps) {
   const places = useTravelMapStore((s) => s.places)
   const prefs = useTravelMapStore((s) => s.preferences)
   const setMapLayer = useTravelMapStore((s) => s.setMapLayer)
-  const stats = useTravelStats()
+  const stats = useMapVisibleStats()
+  const isMobile = useIsMobile()
   const years = visitedYears(places)
+  const yearsKey = years.join(',')
   const done = stats.countriesLeft === 0 && stats.countriesVisited > 0
+  const yearIndex =
+    prefs.yearFilter == null ? years.length : years.indexOf(prefs.yearFilter)
+
+  useEffect(() => {
+    if (prefs.yearFilter != null && !years.includes(prefs.yearFilter)) {
+      setMapLayer({ yearFilter: null })
+    }
+  }, [prefs.yearFilter, yearsKey, years, setMapLayer])
 
   return (
     <div className="flex flex-col gap-2">
@@ -62,7 +73,7 @@ export function MapLayerControls({ onFitPlaces }: MapLayerControlsProps) {
           <Maximize2 className="h-3.5 w-3.5" />
         </Button>
       </div>
-      {years.length > 0 && (
+      {years.length > 0 && !isMobile && (
         <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-md min-w-[200px]">
           <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
             <span>{t('mapLayers.year')}</span>
@@ -76,11 +87,7 @@ export function MapLayerControls({ onFitPlaces }: MapLayerControlsProps) {
             type="range"
             min={0}
             max={years.length}
-            value={
-              prefs.yearFilter == null
-                ? years.length
-                : years.indexOf(prefs.yearFilter)
-            }
+            value={yearIndex < 0 ? years.length : yearIndex}
             onChange={(e) => {
               const index = Number(e.target.value)
               setMapLayer({
@@ -111,6 +118,7 @@ function LayerChip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         'h-7 px-2 rounded-md text-xs font-medium cursor-pointer transition-colors',
         active

@@ -62,6 +62,8 @@ export const DEFAULT_MAP_VIEWPORT = {
 
 export const STORAGE_KEY = 'travel-map-storage-v1'
 
+export const STORAGE_QUOTA_EVENT = 'travel-map-storage-quota'
+
 export const SUPPORT_MODAL_INTERVAL = 3
 
 export const BACKUP_REMINDER_THRESHOLD = 5

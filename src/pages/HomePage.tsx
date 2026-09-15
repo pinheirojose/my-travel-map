@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useTravelMapStore } from '@/store/travelMapStore'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
-import { useTravelStats } from '@/hooks/usePlaces'
+import { useMapVisiblePlaces } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Toolbar } from '@/components/toolbar/Toolbar'
 import { TravelSidebar } from '@/components/sidebar/TravelSidebar'
@@ -14,7 +14,6 @@ import { ExportModal, SupportModal } from '@/components/export/ExportModals'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ClientOnly } from '@/components/ClientOnly'
 import { WorldMap } from '@/components/map/WorldMap'
-import { MapStylePicker } from '@/components/map/MapStylePicker'
 import { MapLayerControls } from '@/components/map/MapLayerControls'
 import { EmptyMapCta } from '@/components/map/EmptyMapCta'
 import { HelpDialog } from '@/components/help/HelpDialog'
@@ -30,9 +29,11 @@ import {
 } from '@/services/export'
 import { getMapStyle } from '@/utils/mapStyles'
 import { findDuplicatePlace } from '@/utils/duplicates'
+import { computeStats } from '@/services/places'
 import { downloadBlob, readFileAsText } from '@/utils'
 import {
   BACKUP_REMINDER_THRESHOLD,
+  STORAGE_QUOTA_EVENT,
   SUPPORT_MODAL_INTERVAL,
 } from '@/utils/constants'
 import type {
@@ -107,7 +108,7 @@ export function HomePage() {
   const markJsonBackup = useTravelMapStore((s) => s.markJsonBackup)
 
   const { darkMode, toggleDarkMode } = useDarkMode()
-  const stats = useTravelStats()
+  const visiblePlaces = useMapVisiblePlaces()
   const { t, locale } = useTranslation()
 
   const showBackupBanner =
@@ -118,6 +119,12 @@ export function HomePage() {
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
+
+  useEffect(() => {
+    const onQuota = () => toast.error(t('toast.storageFull'))
+    window.addEventListener(STORAGE_QUOTA_EVENT, onQuota)
+    return () => window.removeEventListener(STORAGE_QUOTA_EVENT, onQuota)
+  }, [t])
 
   const handleMapClick = useCallback(
     async (lat: number, lng: number) => {
@@ -232,8 +239,11 @@ export function HomePage() {
           country: location.country || place.country,
           countryCode: location.countryCode || place.countryCode,
         })
-      } catch {
+      } catch (err) {
         updatePlace(place.id, { latitude: lat, longitude: lng })
+        if (err instanceof Error && err.message === 'RATE_LIMIT') {
+          toast.error(t('toast.geocodeRateLimit'))
+        }
       }
       toast.success(t('toast.placeUpdated'))
     },
@@ -275,10 +285,11 @@ export function HomePage() {
       setExportProgress({ done: 0, total: 0 })
       try {
         const style = getMapStyle(styleId)
+        const exportPlaces = visiblePlaces.length > 0 ? visiblePlaces : places
         const result = await generatePrintableMap(
-          places,
+          exportPlaces,
           style,
-          stats,
+          computeStats(exportPlaces),
           {
             mapTitle: t('export.mapTitle'),
             legend: t('export.legend'),
@@ -310,7 +321,7 @@ export function HomePage() {
         setExportProgress(null)
       }
     },
-    [places, stats, incrementDownloadCount, t],
+    [places, visiblePlaces, incrementDownloadCount, t],
   )
 
   const handleExportJson = useCallback(() => {
@@ -415,7 +426,6 @@ export function HomePage() {
           </ClientOnly>
 
           <div className="absolute bottom-4 left-4 z-[1000] flex flex-col gap-2">
-            <MapStylePicker variant="map" />
             <MapLayerControls
               onFitPlaces={() => setFitRequestId((n) => n + 1)}
             />

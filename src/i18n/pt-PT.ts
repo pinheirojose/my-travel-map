@@ -184,6 +184,7 @@ const ptPT: Messages = {
     notes: 'Notas (opcional)',
     notesPlaceholder: 'Memórias, dicas ou planos...',
     country: 'País',
+    countryCode: 'Código do país',
     city: 'Cidade',
     region: 'Região',
     latitude: 'Latitude',
@@ -293,6 +294,8 @@ const ptPT: Messages = {
     importedMerge: 'Juntados {{count}} locais do ficheiro',
     importFailed: 'Falha ao importar o ficheiro',
     resetDone: 'Todos os dados foram repostos',
+    countriesLoadFailed: 'Não foi possível carregar os países. O preenchimento pode falhar.',
+    storageFull: 'O browser está sem espaço. Exporte JSON agora para não perder os locais.',
   },
   common: {
     close: 'Fechar',

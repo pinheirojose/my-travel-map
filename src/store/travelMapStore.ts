@@ -16,6 +16,7 @@ import {
   DEFAULT_MAP_VIEWPORT,
   MAX_UNDO_HISTORY,
   STORAGE_KEY,
+  STORAGE_QUOTA_EVENT,
 } from '@/utils/constants'
 import { detectBrowserLocale } from '@/i18n'
 import { generateId } from '@/utils'
@@ -356,7 +357,17 @@ export const useTravelMapStore = create<TravelMapStore>()(
         preferences: state.preferences,
         sidebarFilters: state.sidebarFilters,
       }),
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => ({
+        getItem: (name) => localStorage.getItem(name),
+        setItem: (name, value) => {
+          try {
+            localStorage.setItem(name, value)
+          } catch {
+            window.dispatchEvent(new Event(STORAGE_QUOTA_EVENT))
+          }
+        },
+        removeItem: (name) => localStorage.removeItem(name),
+      })),
       merge: (persisted, current) => {
         const persistedState = (persisted ?? {}) as Partial<TravelMapStore>
         const persistedPrefs = persistedState.preferences

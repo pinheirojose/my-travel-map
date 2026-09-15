@@ -189,13 +189,26 @@ export function PlaceDialog({
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="country">{t('placeDialog.country')}</Label>
-              <Input
-                id="country"
-                value={draft.country}
-                onChange={(e) => update('country', e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="country">{t('placeDialog.country')}</Label>
+                <Input
+                  id="country"
+                  value={draft.country}
+                  onChange={(e) => update('country', e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="countryCode">{t('placeDialog.countryCode')}</Label>
+                <Input
+                  id="countryCode"
+                  value={draft.countryCode}
+                  maxLength={2}
+                  onChange={(e) =>
+                    update('countryCode', e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))
+                  }
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

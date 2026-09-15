@@ -88,6 +88,22 @@ const COUNTRY_TO_CONTINENT: Record<string, ContinentId> = {
   AQ: 'antarctica',
 }
 
+/** Dependencies and territories counted on the map but not in the 195 UN-style world %. */
+const NON_UN_CODES = new Set([
+  'EH', 'TW', 'HK', 'MO', 'XK',
+  'GG', 'JE', 'IM', 'FO', 'AX', 'GI',
+  'PR', 'VI', 'VG', 'KY', 'BM', 'GL', 'GP', 'MQ', 'AW', 'CW', 'SX', 'TC',
+  'FK', 'GF',
+  'NC', 'PF', 'GU', 'AS', 'CK', 'NU',
+  'AQ',
+])
+
+export function isWorldStatCountry(countryCode: string): boolean {
+  const code = countryCode.toUpperCase()
+  if (!code || NON_UN_CODES.has(code)) return false
+  return code in COUNTRY_TO_CONTINENT
+}
+
 export function getContinentForCountryCode(
   countryCode: string,
 ): ContinentId | null {

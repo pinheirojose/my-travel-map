@@ -166,6 +166,7 @@ export type Messages = {
     notes: string
     notesPlaceholder: string
     country: string
+    countryCode: string
     city: string
     region: string
     latitude: string
@@ -270,6 +271,8 @@ export type Messages = {
     importedMerge: string
     importFailed: string
     resetDone: string
+    countriesLoadFailed: string
+    storageFull: string
   }
   common: {
     close: string

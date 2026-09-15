@@ -11,7 +11,7 @@ import { formatDate } from '@/utils'
 const LANDSCAPE_WIDTH = 3840
 const LANDSCAPE_HEIGHT = 2160
 const TILE_SIZE = 256
-const MAX_EXPORT_ZOOM = 8
+const MAX_EXPORT_ZOOM = 12
 const MAX_TILES = 256
 const TILE_FETCH_CONCURRENCY = 8
 
@@ -614,14 +614,16 @@ export function validateJsonImport(data: unknown): data is {
   if (!data || typeof data !== 'object') return false
   const obj = data as Record<string, unknown>
   if (!Array.isArray(obj.places)) return false
-  return obj.places.every(
-    (p) =>
-      p &&
-      typeof p === 'object' &&
-      typeof (p as Place).id === 'string' &&
-      typeof (p as Place).name === 'string' &&
-      typeof (p as Place).latitude === 'number',
-  )
+  return obj.places.every((item) => {
+    if (!item || typeof item !== 'object') return false
+    const p = item as Place
+    return (
+      typeof p.id === 'string' &&
+      typeof p.name === 'string' &&
+      Number.isFinite(p.latitude) &&
+      Number.isFinite(p.longitude)
+    )
+  })
 }
 
 export { CATEGORY_CONFIG, STATUS_CONFIG, formatDate }

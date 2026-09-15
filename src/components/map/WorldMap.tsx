@@ -15,6 +15,7 @@ import { createClusterIcon } from './PlaceMarker'
 import { useTravelMapStore } from '@/store/travelMapStore'
 import { getMapStyle } from '@/utils/mapStyles'
 import { clusterPlaces } from '@/utils/clusterPlaces'
+import { mapVisiblePlaces } from '@/services/places'
 import type { Place } from '@/types'
 
 interface WorldMapProps {
@@ -26,23 +27,6 @@ interface WorldMapProps {
   flyToTarget?: { lat: number; lng: number; zoom?: number } | null
   onFlyToComplete?: () => void
   fitRequestId?: number
-}
-
-function visiblePlaces(
-  places: Place[],
-  showVisited: boolean,
-  showWishlist: boolean,
-  yearFilter: number | null,
-): Place[] {
-  return places.filter((place) => {
-    if (place.status === 'visited' && !showVisited) return false
-    if (place.status === 'wishlist' && !showWishlist) return false
-    if (yearFilter != null) {
-      if (!place.visitedDate) return false
-      return Number.parseInt(place.visitedDate.slice(0, 4), 10) === yearFilter
-    }
-    return true
-  })
 }
 
 function MapEventHandler({
@@ -172,7 +156,12 @@ export function WorldMap({
 
   const style = getMapStyle(selectedMapStyle)
   const filtered = useMemo(
-    () => visiblePlaces(places, showVisited, showWishlist, yearFilter),
+    () =>
+      mapVisiblePlaces(places, {
+        showVisited,
+        showWishlist,
+        yearFilter,
+      }),
     [places, showVisited, showWishlist, yearFilter],
   )
   const clustered = useMemo(

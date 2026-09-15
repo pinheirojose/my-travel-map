@@ -184,6 +184,7 @@ const en: Messages = {
     notes: 'Notes (optional)',
     notesPlaceholder: 'Memories, tips, or plans...',
     country: 'Country',
+    countryCode: 'Country code',
     city: 'City',
     region: 'Region',
     latitude: 'Latitude',
@@ -293,6 +294,8 @@ const en: Messages = {
     importedMerge: 'Merged {{count}} places from file',
     importFailed: 'Failed to import file',
     resetDone: 'All data has been reset',
+    countriesLoadFailed: 'Could not load country outlines. Fills may be missing.',
+    storageFull: 'This browser is out of space. Export JSON now so you do not lose places.',
   },
   common: {
     close: 'Close',

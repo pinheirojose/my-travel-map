@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { computeStats, filterAndSortPlaces, groupPlacesByCountry } from '@/services/places'
+import { computeStats, filterAndSortPlaces, groupPlacesByCountry, mapVisiblePlaces } from '@/services/places'
 import { useTravelMapStore } from '@/store/travelMapStore'
 
 export function useFilteredPlaces() {
@@ -26,6 +26,28 @@ export function useGroupedPlaces() {
 export function useTravelStats() {
   const places = useTravelMapStore((s) => s.places)
   return useMemo(() => computeStats(places), [places])
+}
+
+export function useMapVisiblePlaces() {
+  const places = useTravelMapStore((s) => s.places)
+  const showVisited = useTravelMapStore((s) => s.preferences.showVisited)
+  const showWishlist = useTravelMapStore((s) => s.preferences.showWishlist)
+  const yearFilter = useTravelMapStore((s) => s.preferences.yearFilter)
+
+  return useMemo(
+    () =>
+      mapVisiblePlaces(places, {
+        showVisited,
+        showWishlist,
+        yearFilter,
+      }),
+    [places, showVisited, showWishlist, yearFilter],
+  )
+}
+
+export function useMapVisibleStats() {
+  const visible = useMapVisiblePlaces()
+  return useMemo(() => computeStats(visible), [visible])
 }
 
 export function useIsMobile() {

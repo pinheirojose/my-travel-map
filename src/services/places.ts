@@ -3,18 +3,43 @@ import {
   computeCountriesLeft,
   computeWorldVisitedPercent,
   getContinentForCountryCode,
+  isWorldStatCountry,
 } from '@/utils/continents'
+
+export function mapVisiblePlaces(
+  places: Place[],
+  options: {
+    showVisited: boolean
+    showWishlist: boolean
+    yearFilter: number | null
+  },
+): Place[] {
+  return places.filter((place) => {
+    if (place.status === 'visited' && !options.showVisited) return false
+    if (place.status === 'wishlist' && !options.showWishlist) return false
+    if (options.yearFilter != null && place.status === 'visited') {
+      if (!place.visitedDate) return false
+      return Number.parseInt(place.visitedDate.slice(0, 4), 10) === options.yearFilter
+    }
+    return true
+  })
+}
+
+function countableCountryCodes(places: Place[]): Set<string> {
+  const codes = new Set<string>()
+  for (const place of places) {
+    const code = place.countryCode?.toUpperCase()
+    if (code && isWorldStatCountry(code)) codes.add(code)
+  }
+  return codes
+}
 
 export function computeStats(places: Place[]): TravelStats {
   const visited = places.filter((p) => p.status === 'visited')
   const wishlist = places.filter((p) => p.status === 'wishlist')
 
-  const visitedCountries = new Set(
-    visited.filter((p) => p.countryCode).map((p) => p.countryCode.toUpperCase()),
-  )
-  const wishlistCountries = new Set(
-    wishlist.filter((p) => p.countryCode).map((p) => p.countryCode.toUpperCase()),
-  )
+  const visitedCountries = countableCountryCodes(visited)
+  const wishlistCountries = countableCountryCodes(wishlist)
 
   const continents = new Set(
     [...visitedCountries]

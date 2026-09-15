@@ -1,29 +1,20 @@
 # Travel Map
 
-A premium personal travel map application. Mark places you've visited or dream of visiting on an interactive world map, with beautiful visualizations and high-resolution printable exports.
+A personal travel map. Mark places you have visited or want to visit, then download a high-resolution poster. Everything stays in this browser — export JSON so you do not lose it.
 
 ## Features
 
-- **Interactive World Map** — Click anywhere to add places with automatic reverse geocoding
-- **Place Management** — Organize by status (Visited / Wishlist), category, and country
-- **Smart Sidebar** — Search, filter, sort, and browse places grouped by country
-- **Printable Exports** — Ultra high-resolution PNG with 7 map styles, layout options, and live preview
-- **Data Portability** — Export and import your data as JSON
-- **Dark Mode** — Beautiful light and dark themes
-- **Keyboard Shortcuts** — ⌘N add, ⌘E export, ⌘B sidebar, ⌘D dark mode, ⌘Z undo
-- **Local Storage** — All data persists locally, no account required
+- **Add places** — Search a name, or choose Add Place → Click on map (plain map clicks do nothing until that mode is on)
+- **Place management** — Visited or wishlist, category, date, notes, drag the pin, edit country code
+- **Sidebar** — Search, filter, sort, grouped by country
+- **Map layers** — Toggle visited / wishlist pins, country fills, year filter (desktop), countries left to visit
+- **Printable PNG** — 7 styles, landscape or portrait, fit places or whole world
+- **JSON backup** — Export and import (replace or merge)
+- **English and Português (Portugal)**
+- **Dark mode** — Follows the system on first visit
+- **Local storage** — No account
 
-## Tech Stack
-
-- React 19 + TypeScript + Vite
-- TailwindCSS + shadcn/ui
-- React Leaflet + Leaflet
-- Zustand (persisted state)
-- Framer Motion
-- React Hot Toast
-- html-to-image
-
-## Getting Started
+## Getting started
 
 ```bash
 npm install
@@ -32,24 +23,17 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173).
 
-## Build
-
-```bash
-npm run build
-npm run preview
-```
-
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 |----------|--------|
-| ⌘N | Toggle add place mode |
+| ⌘N | Add place |
 | ⌘E | Download printable map |
-| ⌘B | Toggle sidebar (mobile) |
+| ⌘B | Toggle places list (mobile) |
 | ⌘D | Toggle dark mode |
 | ⌘Z | Undo last action |
 | ⌘/ | Help |
-| Esc | Deselect place / exit add mode |
+| Esc | Deselect / exit add mode |
 
 ## License
 
