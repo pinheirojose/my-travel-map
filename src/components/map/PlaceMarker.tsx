@@ -71,7 +71,7 @@ export function createClusterIcon(count: number, color: string): L.DivIcon {
       width:${size}px;height:${size}px;border-radius:50%;
       background:${color};border:2.5px solid white;
       box-shadow:0 2px 8px rgba(0,0,0,0.25);
-      display:flex;align-items:center;justify-center;
+      display:flex;align-items:center;justify-content:center;
       color:white;font-size:13px;font-weight:600;font-family:Inter,sans-serif;
     ">${count}</div>`,
     iconSize: [size, size],

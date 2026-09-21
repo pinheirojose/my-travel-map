@@ -34,15 +34,25 @@ export function MapLayerControls({ onFitPlaces }: MapLayerControlsProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-md min-w-[11.5rem]">
-        <p className="text-xl font-semibold tabular-nums leading-none tracking-tight">
-          {done ? '0' : stats.countriesLeft}
-        </p>
-        <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
-          {done ? t('mapLayers.countriesLeftDone') : t('mapLayers.countriesLeft')}
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-1 bg-card border border-border rounded-lg p-1 shadow-md">
+      {!isMobile && (
+        <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-md min-w-[11.5rem]">
+          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight">
+            {done ? '0' : stats.countriesLeft}
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+            {done ? t('mapLayers.countriesLeftDone') : t('mapLayers.countriesLeft')}
+          </p>
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-1 bg-card border border-border rounded-lg p-1 shadow-md">
+        {isMobile && (
+          <span className="h-9 px-2 inline-flex items-center text-xs font-medium tabular-nums text-foreground">
+            {done ? '0' : stats.countriesLeft}{' '}
+            <span className="ml-1 text-muted-foreground font-normal">
+              {t('mapLayers.countriesLeftShort')}
+            </span>
+          </span>
+        )}
         <LayerChip
           active={prefs.showVisited}
           color="#22c55e"
@@ -67,7 +77,7 @@ export function MapLayerControls({ onFitPlaces }: MapLayerControlsProps) {
           type="button"
           size="sm"
           variant="ghost"
-          className="h-7 px-2 text-xs"
+          className={cn('h-9 px-2 text-xs md:h-7')}
           onClick={onFitPlaces}
           aria-label={t('toolbar.fitPlaces')}
           title={t('toolbar.fitPlaces')}
@@ -122,7 +132,7 @@ function LayerChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'h-7 px-2 rounded-md text-xs font-medium cursor-pointer transition-colors',
+        'h-9 md:h-7 px-2 rounded-md text-xs font-medium cursor-pointer transition-colors',
         active
           ? 'bg-primary/10 text-foreground'
           : 'text-muted-foreground hover:bg-accent',

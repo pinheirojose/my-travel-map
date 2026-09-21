@@ -16,6 +16,7 @@ import { useTravelMapStore } from '@/store/travelMapStore'
 import { getMapStyle } from '@/utils/mapStyles'
 import { clusterPlaces } from '@/utils/clusterPlaces'
 import { mapVisiblePlaces } from '@/services/places'
+import { useIsMobile } from '@/hooks/usePlaces'
 import type { Place } from '@/types'
 
 interface WorldMapProps {
@@ -171,6 +172,7 @@ export function WorldMap({
   )
   const setSelectedPlaceId = useTravelMapStore((s) => s.setSelectedPlaceId)
   const [zoom, setZoom] = useState(initialViewportRef.current.zoom)
+  const isMobile = useIsMobile()
 
   const style = getMapStyle(selectedMapStyle)
   const filtered = useMemo(
@@ -253,7 +255,7 @@ export function WorldMap({
             place={place}
             isSelected={selectedPlaceId === place.id}
             isNew={recentlyAddedIds.includes(place.id)}
-            draggable={!addMode}
+            draggable={!addMode && !isMobile}
             onSelect={handleSelect}
             onEdit={onEditPlace}
             onDelete={onDeletePlace}

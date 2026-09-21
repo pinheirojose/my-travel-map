@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { useTravelMapStore } from '@/store/travelMapStore'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
-import { useMapVisiblePlaces } from '@/hooks/usePlaces'
+import { useIsMobile, useMapVisiblePlaces } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Toolbar } from '@/components/toolbar/Toolbar'
 import { TravelSidebar } from '@/components/sidebar/TravelSidebar'
@@ -13,7 +13,6 @@ import { AddPlaceChooser } from '@/components/places/AddPlaceChooser'
 import { ExportModal, SupportModal } from '@/components/export/ExportModals'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ClientOnly } from '@/components/ClientOnly'
-import { WorldMap } from '@/components/map/WorldMap'
 import { MapLayerControls } from '@/components/map/MapLayerControls'
 import { EmptyMapCta } from '@/components/map/EmptyMapCta'
 import { HelpDialog } from '@/components/help/HelpDialog'
@@ -45,6 +44,10 @@ import type {
   PlaceDraft,
 } from '@/types'
 import type { PlaceSearchResult } from '@/services/geocoding'
+
+const WorldMap = lazy(() =>
+  import('@/components/map/WorldMap').then((mod) => ({ default: mod.WorldMap })),
+)
 
 export function HomePage() {
   const [addMode, setAddMode] = useState(false)
@@ -109,6 +112,7 @@ export function HomePage() {
 
   const { darkMode, toggleDarkMode } = useDarkMode()
   const visiblePlaces = useMapVisiblePlaces()
+  const isMobile = useIsMobile()
   const { t, locale } = useTranslation()
 
   const showBackupBanner =
@@ -393,7 +397,7 @@ export function HomePage() {
   })
 
   return (
-    <div className="flex flex-col h-dvh overflow-hidden">
+    <div className="flex flex-col h-dvh overflow-hidden pt-safe">
       <Toolbar
         darkMode={darkMode}
         addMode={addMode}
@@ -410,22 +414,24 @@ export function HomePage() {
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
         <main className="flex-1 min-h-0 md:w-[75%] relative">
           <ClientOnly>
-            <WorldMap
-              onMapClick={handleMapClick}
-              onEditPlace={handleEditPlace}
-              onDeletePlace={(id) => {
-                const place = places.find((p) => p.id === id) ?? null
-                setDeleteTarget(place)
-              }}
-              onPlaceMoved={handlePlaceMoved}
-              addMode={addMode}
-              flyToTarget={flyToTarget}
-              onFlyToComplete={clearFlyToTarget}
-              fitRequestId={fitRequestId}
-            />
+            <Suspense fallback={null}>
+              <WorldMap
+                onMapClick={handleMapClick}
+                onEditPlace={handleEditPlace}
+                onDeletePlace={(id) => {
+                  const place = places.find((p) => p.id === id) ?? null
+                  setDeleteTarget(place)
+                }}
+                onPlaceMoved={handlePlaceMoved}
+                addMode={addMode}
+                flyToTarget={flyToTarget}
+                onFlyToComplete={clearFlyToTarget}
+                fitRequestId={fitRequestId}
+              />
+            </Suspense>
           </ClientOnly>
 
-          <div className="absolute bottom-4 left-4 z-[1000] flex flex-col gap-2">
+          <div className="absolute bottom-4 left-3 right-3 md:left-4 md:right-auto z-[1000] flex flex-col gap-2 pb-safe">
             <MapLayerControls
               onFitPlaces={() => setFitRequestId((n) => n + 1)}
             />
@@ -441,7 +447,7 @@ export function HomePage() {
             />
           )}
 
-          {showBackupBanner && !addMode && (
+          {showBackupBanner && !addMode && !welcomeOpen && (
             <BackupBanner
               onExport={handleExportJson}
               onDismiss={dismissBackupReminder}
@@ -450,15 +456,19 @@ export function HomePage() {
 
           {addMode && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: isMobile ? -8 : 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+              className={
+                isMobile
+                  ? 'absolute top-0 inset-x-0 z-[1000] h-10 flex items-center justify-center gap-3 bg-primary text-primary-foreground px-3 text-sm font-medium shadow-md'
+                  : 'absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg'
+              }
             >
               {t('addPlace.mapHint')}
               <button
                 type="button"
                 onClick={() => setAddMode(false)}
-                className="ml-3 underline underline-offset-2 opacity-90 hover:opacity-100 cursor-pointer"
+                className="underline underline-offset-2 opacity-90 hover:opacity-100 cursor-pointer"
               >
                 {t('addPlace.cancel')}
               </button>
@@ -575,6 +585,9 @@ export function HomePage() {
 
       <Toaster
         position="bottom-center"
+        containerStyle={{
+          bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+        }}
         toastOptions={{
           className: 'text-sm',
           style: {

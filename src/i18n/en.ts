@@ -134,6 +134,7 @@ const en: Messages = {
   onboarding: {
     mapTitle: 'Start your travel map',
     mapHint: 'Add a place with the button above — search or click the map after you choose “Click on map”.',
+    mapHintShort: 'Search or tap the map to add a place.',
     cta: 'Add your first place',
     skip: 'Skip',
     dialogTitle: 'Welcome to Travel Map',
@@ -162,6 +163,9 @@ const en: Messages = {
     shortcutUndo: 'Undo last action',
     shortcutEsc: 'Deselect / exit add mode',
     shortcutHelp: 'Open help',
+    touchTitle: 'On a phone',
+    touchBody:
+      'Tap Add Place, then Search (easiest) or Click on map. Open Places from the toolbar to browse, edit, or delete. Pins stay in place while you pan — change coordinates in Edit if you need to move one.',
   },
   mapLayers: {
     visited: 'Visited',
@@ -171,6 +175,7 @@ const en: Messages = {
     year: 'Year',
     countriesLeft: 'Countries left to visit',
     countriesLeftDone: 'All countries visited',
+    countriesLeftShort: 'left',
   },
   placeDialog: {
     addTitle: 'Add Place',
@@ -190,6 +195,7 @@ const en: Messages = {
     latitude: 'Latitude',
     longitude: 'Longitude',
     locationHint: 'You can also drag the pin on the map after saving.',
+    exactLocation: 'Exact location',
     cancel: 'Cancel',
     save: 'Save',
   },

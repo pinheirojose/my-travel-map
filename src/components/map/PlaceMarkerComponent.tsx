@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Marker, Popup, Tooltip } from 'react-leaflet'
 import type { Place } from '@/types'
 import { useTravelMapStore } from '@/store/travelMapStore'
+import { useIsMobile } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 import { getMapStyle } from '@/utils/mapStyles'
 import { createPlaceIcon } from './PlaceMarker'
@@ -30,12 +31,18 @@ export function PlaceMarkerComponent({
   onMoved,
 }: PlaceMarkerProps) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const markerRef = useRef<L.Marker>(null)
   const clearRecentlyAdded = useTravelMapStore((s) => s.clearRecentlyAdded)
   const selectedMapStyle = useTravelMapStore(
     (s) => s.preferences.selectedMapStyle,
   )
   const style = getMapStyle(selectedMapStyle)
+  const popupMaxWidth = Math.min(
+    320,
+    typeof window !== 'undefined' ? window.innerWidth - 32 : 320,
+  )
+  const popupMinWidth = Math.min(200, popupMaxWidth)
 
   const icon = useMemo(
     () =>
@@ -78,20 +85,23 @@ export function PlaceMarkerComponent({
         },
       }}
     >
-      <Tooltip direction="top" offset={[0, -16]} opacity={0.95}>
-        <div className="text-xs">
-          <p className="font-semibold">{place.name}</p>
-          {place.country && <p className="text-muted-foreground">{place.country}</p>}
-          <p className="text-muted-foreground">
-            {t(`category.${place.category}`)} · {t(`status.${place.status}`)}
-          </p>
-        </div>
-      </Tooltip>
-      <Popup minWidth={240} maxWidth={320}>
+      {!isMobile && (
+        <Tooltip direction="top" offset={[0, -16]} opacity={0.95}>
+          <div className="text-xs">
+            <p className="font-semibold">{place.name}</p>
+            {place.country && <p className="text-muted-foreground">{place.country}</p>}
+            <p className="text-muted-foreground">
+              {t(`category.${place.category}`)} · {t(`status.${place.status}`)}
+            </p>
+          </div>
+        </Tooltip>
+      )}
+      <Popup minWidth={popupMinWidth} maxWidth={popupMaxWidth}>
         <PlacePopup
           place={place}
           onEdit={() => onEdit(place)}
           onDelete={() => onDelete(place.id)}
+          showDragHint={draggable}
         />
       </Popup>
     </Marker>

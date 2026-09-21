@@ -260,7 +260,7 @@ export function TravelSidebar({ isOpen, onClose }: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-card border-l border-border z-50 md:hidden flex flex-col shadow-2xl"
+              className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-card border-l border-border z-50 md:hidden flex flex-col shadow-2xl pt-safe pb-safe pr-safe"
             >
               {sidebarContent}
             </motion.aside>

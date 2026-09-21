@@ -3,6 +3,7 @@ import {
   Download,
   EllipsisVertical,
   FileJson,
+  Languages,
   List,
   MapPinPlus,
   Moon,
@@ -21,12 +22,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MapStylePicker } from '@/components/map/MapStylePicker'
 import { LanguageSwitcher } from '@/components/toolbar/LanguageSwitcher'
+import { useTravelMapStore } from '@/store/travelMapStore'
 import { useTranslation } from '@/hooks/useTranslation'
+import { LOCALES, type Locale } from '@/i18n'
+import type { MapStyleId } from '@/types'
+import { MAP_STYLES } from '@/utils/mapStyles'
 import { cn } from '@/utils'
 
 interface ToolbarProps {
@@ -54,13 +62,15 @@ export function Toolbar({
   onToggleSidebar,
   onHelp,
 }: ToolbarProps) {
-  const { t } = useTranslation()
+  const { t, locale, setLocale } = useTranslation()
+  const selectedMapStyle = useTravelMapStore((s) => s.preferences.selectedMapStyle)
+  const setSelectedMapStyle = useTravelMapStore((s) => s.setSelectedMapStyle)
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0 z-10">
+      <header className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0 z-10 pl-safe pr-safe">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex items-center gap-2 mr-2">
+          <div className="flex items-center gap-2 mr-1 md:mr-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <MapPinPlus className="h-4 w-4 text-primary-foreground" />
             </div>
@@ -82,7 +92,7 @@ export function Toolbar({
             <span className="hidden lg:inline text-xs">{t('toolbar.addPlace')}</span>
           </ToolbarButton>
 
-          <div className="block">
+          <div className="hidden md:block">
             <MapStylePicker variant="toolbar" />
           </div>
         </div>
@@ -92,6 +102,7 @@ export function Toolbar({
             tooltip={t('toolbar.downloadTooltip')}
             onClick={onDownload}
             ariaLabel={t('toolbar.download')}
+            className="hidden md:inline-flex"
           >
             <Download className="h-4 w-4" />
             <span className="hidden lg:inline text-xs">{t('toolbar.download')}</span>
@@ -119,13 +130,16 @@ export function Toolbar({
             </ToolbarButton>
           </div>
 
-          <LanguageSwitcher />
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
 
           <ToolbarButton
             tooltip={darkMode ? t('toolbar.lightMode') : t('toolbar.darkMode')}
             onClick={onToggleDarkMode}
             variant="ghost"
             ariaLabel={darkMode ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+            className="hidden md:inline-flex"
           >
             {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </ToolbarButton>
@@ -134,7 +148,7 @@ export function Toolbar({
             tooltip={t('toolbar.helpTooltip')}
             onClick={onHelp}
             variant="ghost"
-            className="hidden sm:inline-flex"
+            className="hidden md:inline-flex"
             ariaLabel={t('toolbar.help')}
           >
             <CircleHelp className="h-4 w-4" />
@@ -154,26 +168,75 @@ export function Toolbar({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8"
+                className="h-10 w-10 md:h-8 md:w-8"
                 aria-label={t('toolbar.more')}
               >
                 <EllipsisVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem className="sm:hidden gap-2" onClick={onHelp}>
-                <CircleHelp className="h-4 w-4" />
-                {t('toolbar.help')}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="md:hidden gap-2" onClick={onExportJson}>
-                <FileJson className="h-4 w-4" />
-                {t('toolbar.export')}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="md:hidden gap-2" onClick={onImportJson}>
-                <Upload className="h-4 w-4" />
-                {t('toolbar.import')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="md:hidden" />
+            <DropdownMenuContent align="end" className="w-56 max-h-[min(70dvh,24rem)] overflow-y-auto">
+              <div className="md:hidden">
+                <DropdownMenuItem className="gap-2" onClick={onDownload}>
+                  <Download className="h-4 w-4" />
+                  {t('toolbar.download')}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={onExportJson}>
+                  <FileJson className="h-4 w-4" />
+                  {t('toolbar.export')}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={onImportJson}>
+                  <Upload className="h-4 w-4" />
+                  {t('toolbar.import')}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={onToggleDarkMode}>
+                  {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {darkMode ? t('toolbar.lightMode') : t('toolbar.darkMode')}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={onHelp}>
+                  <CircleHelp className="h-4 w-4" />
+                  {t('toolbar.help')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Languages className="h-3.5 w-3.5" />
+                  {t('language.label')}
+                </DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={locale}
+                  onValueChange={(value) => setLocale(value as Locale)}
+                >
+                  {LOCALES.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option.id}
+                      value={option.id}
+                      className="cursor-pointer"
+                    >
+                      {option.id === 'en'
+                        ? t('language.english')
+                        : t('language.portuguese')}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                  {t('toolbar.mapStyle')}
+                </DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={selectedMapStyle}
+                  onValueChange={(value) => setSelectedMapStyle(value as MapStyleId)}
+                >
+                  {MAP_STYLES.map((style) => (
+                    <DropdownMenuRadioItem
+                      key={style.id}
+                      value={style.id}
+                      className="cursor-pointer"
+                    >
+                      {t(`mapStyles.${style.id}.name`)}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+              </div>
               <DropdownMenuItem onClick={onReset} className="text-destructive gap-2">
                 <RotateCcw className="h-4 w-4" />
                 {t('toolbar.reset')}
@@ -214,7 +277,7 @@ function ToolbarButton({
           onClick={onClick}
           aria-label={ariaLabel ?? tooltip}
           className={cn(
-            'h-8 gap-1.5',
+            'h-10 md:h-8 gap-1.5',
             active && 'bg-primary/10 border-primary text-primary',
             className,
           )}

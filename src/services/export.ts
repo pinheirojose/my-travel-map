@@ -1,4 +1,3 @@
-import { toPng } from 'html-to-image'
 import type {
   ExportPrintOptions,
   MapStyleDefinition,
@@ -580,6 +579,7 @@ export async function generatePrintableMap(
 }
 
 export async function captureMapPreview(element: HTMLElement): Promise<string> {
+  const { toPng } = await import('html-to-image')
   return toPng(element, {
     quality: 0.95,
     pixelRatio: 2,

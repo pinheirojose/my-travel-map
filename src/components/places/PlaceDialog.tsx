@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { GeocodedLocation, Place, PlaceCategory, PlaceDraft, PlaceStatus } from '@/types'
 import { PLACE_CATEGORIES, PLACE_STATUSES } from '@/types'
 import { STATUS_CONFIG } from '@/utils/constants'
+import { useIsMobile } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   Dialog,
@@ -11,6 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, MapPin } from 'lucide-react'
+import { ChevronDown, Loader2, MapPin } from 'lucide-react'
+import { cn } from '@/utils'
 
 interface PlaceDialogProps {
   open: boolean
@@ -56,7 +63,9 @@ export function PlaceDialog({
   onSave,
 }: PlaceDialogProps) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [draft, setDraft] = useState<PlaceDraft | null>(null)
+  const [coordsOpen, setCoordsOpen] = useState(false)
 
   useEffect(() => {
     if (place) {
@@ -76,6 +85,7 @@ export function PlaceDialog({
     } else if (location) {
       setDraft(defaultDraft(location))
     }
+    if (open) setCoordsOpen(false)
   }, [location, place, open])
 
   const handleSave = () => {
@@ -90,29 +100,42 @@ export function PlaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {place ? t('placeDialog.editTitle') : t('placeDialog.addTitle')}
-          </DialogTitle>
-          <DialogDescription>
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {t('placeDialog.lookingUp')}
-              </span>
-            ) : draft ? (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" />
-                {[draft.city, draft.region, draft.country].filter(Boolean).join(', ') ||
-                  `${draft.latitude.toFixed(4)}, ${draft.longitude.toFixed(4)}`}
-              </span>
-            ) : null}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent
+        className={cn(
+          'sm:max-w-md',
+          isMobile &&
+            'top-auto bottom-0 translate-y-0 rounded-b-none max-h-[min(85dvh,100%)] flex flex-col overflow-hidden gap-0 p-0 pb-0 data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4',
+        )}
+      >
+        <div className={cn(isMobile ? 'px-6 pt-6 pr-14' : undefined)}>
+          <DialogHeader>
+            <DialogTitle>
+              {place ? t('placeDialog.editTitle') : t('placeDialog.addTitle')}
+            </DialogTitle>
+            <DialogDescription>
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('placeDialog.lookingUp')}
+                </span>
+              ) : draft ? (
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {[draft.city, draft.region, draft.country].filter(Boolean).join(', ') ||
+                    `${draft.latitude.toFixed(4)}, ${draft.longitude.toFixed(4)}`}
+                </span>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
         {draft && !isLoading && (
-          <div className="grid gap-4 py-2">
+          <div
+            className={cn(
+              'grid gap-4 py-2',
+              isMobile && 'flex-1 overflow-y-auto px-6 min-h-0',
+            )}
+          >
             <div className="grid gap-2">
               <Label htmlFor="name">{t('placeDialog.name')}</Label>
               <Input
@@ -120,7 +143,7 @@ export function PlaceDialog({
                 value={draft.name}
                 onChange={(e) => update('name', e.target.value)}
                 placeholder={t('placeDialog.namePlaceholder')}
-                autoFocus
+                autoFocus={!isMobile && !isLoading}
               />
             </div>
 
@@ -211,35 +234,55 @@ export function PlaceDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="latitude">{t('placeDialog.latitude')}</Label>
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="0.0001"
-                  value={draft.latitude}
-                  onChange={(e) =>
-                    update('latitude', Number.parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="longitude">{t('placeDialog.longitude')}</Label>
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="0.0001"
-                  value={draft.longitude}
-                  onChange={(e) =>
-                    update('longitude', Number.parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground -mt-2">
-              {t('placeDialog.locationHint')}
-            </p>
+            <Collapsible open={coordsOpen} onOpenChange={setCoordsOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between text-sm font-medium text-left cursor-pointer py-1"
+                >
+                  {t('placeDialog.exactLocation')}
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 text-muted-foreground transition-transform',
+                      coordsOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="grid gap-3 pt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="latitude">{t('placeDialog.latitude')}</Label>
+                    <Input
+                      id="latitude"
+                      type="number"
+                      step="0.0001"
+                      value={draft.latitude}
+                      onChange={(e) =>
+                        update('latitude', Number.parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="longitude">{t('placeDialog.longitude')}</Label>
+                    <Input
+                      id="longitude"
+                      type="number"
+                      step="0.0001"
+                      value={draft.longitude}
+                      onChange={(e) =>
+                        update('longitude', Number.parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </div>
+                </div>
+                {!isMobile && (
+                  <p className="text-[11px] text-muted-foreground -mt-1">
+                    {t('placeDialog.locationHint')}
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
 
             <div className="grid gap-2">
               <Label htmlFor="visitedDate">{t('placeDialog.visitedDate')}</Label>
@@ -264,11 +307,20 @@ export function PlaceDialog({
           </div>
         )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter
+          className={cn(
+            isMobile &&
+              'sticky bottom-0 bg-card px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-border mt-0',
+          )}
+        >
+          <Button variant="outline" className="h-10 md:h-9" onClick={() => onOpenChange(false)}>
             {t('placeDialog.cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={!draft?.name.trim() || isLoading}>
+          <Button
+            className="h-10 md:h-9"
+            onClick={handleSave}
+            disabled={!draft?.name.trim() || isLoading}
+          >
             {t('placeDialog.save')}
           </Button>
         </DialogFooter>

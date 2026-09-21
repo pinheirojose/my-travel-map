@@ -118,6 +118,7 @@ export type Messages = {
   onboarding: {
     mapTitle: string
     mapHint: string
+    mapHintShort: string
     cta: string
     skip: string
     dialogTitle: string
@@ -144,6 +145,8 @@ export type Messages = {
     shortcutUndo: string
     shortcutEsc: string
     shortcutHelp: string
+    touchTitle: string
+    touchBody: string
   }
   mapLayers: {
     visited: string
@@ -153,6 +156,7 @@ export type Messages = {
     year: string
     countriesLeft: string
     countriesLeftDone: string
+    countriesLeftShort: string
   }
   placeDialog: {
     addTitle: string
@@ -172,6 +176,7 @@ export type Messages = {
     latitude: string
     longitude: string
     locationHint: string
+    exactLocation: string
     cancel: string
     save: string
   }

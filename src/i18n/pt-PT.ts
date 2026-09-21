@@ -134,6 +134,7 @@ const ptPT: Messages = {
   onboarding: {
     mapTitle: 'Comece o seu mapa de viagens',
     mapHint: 'Adicione um local com o botão acima — pesquise ou clique no mapa depois de escolher “Clicar no mapa”.',
+    mapHintShort: 'Pesquise ou toque no mapa para adicionar um local.',
     cta: 'Adicionar o primeiro local',
     skip: 'Saltar',
     dialogTitle: 'Bem-vindo ao Travel Map',
@@ -162,6 +163,9 @@ const ptPT: Messages = {
     shortcutUndo: 'Anular última ação',
     shortcutEsc: 'Desselecionar / sair do modo de adicionar',
     shortcutHelp: 'Abrir ajuda',
+    touchTitle: 'No telemóvel',
+    touchBody:
+      'Toque em Adicionar local e depois Pesquisar (mais fácil) ou Clicar no mapa. Abra Locais na barra para ver, editar ou eliminar. Os pins não se mexem ao arrastar o mapa — altere as coordenadas em Editar se precisar de mover um.',
   },
   mapLayers: {
     visited: 'Visitados',
@@ -171,6 +175,7 @@ const ptPT: Messages = {
     year: 'Ano',
     countriesLeft: 'Países por visitar',
     countriesLeftDone: 'Todos os países visitados',
+    countriesLeftShort: 'por visitar',
   },
   placeDialog: {
     addTitle: 'Adicionar local',
@@ -190,6 +195,7 @@ const ptPT: Messages = {
     latitude: 'Latitude',
     longitude: 'Longitude',
     locationHint: 'Também pode arrastar o pin no mapa depois de guardar.',
+    exactLocation: 'Localização exacta',
     cancel: 'Cancelar',
     save: 'Guardar',
   },

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Loader2, MapPin, MousePointerClick, Search } from 'lucide-react'
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { searchPlaces, type PlaceSearchResult } from '@/services/geocoding'
+import { useIsMobile } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/utils'
 
@@ -29,6 +30,7 @@ export function AddPlaceChooser({
   onSelectSearchResult,
 }: AddPlaceChooserProps) {
   const { t, locale } = useTranslation()
+  const isMobile = useIsMobile()
   const [step, setStep] = useState<Step>('choose')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PlaceSearchResult[]>([])
@@ -109,49 +111,43 @@ export function AddPlaceChooser({
 
         {step === 'choose' ? (
           <div className="grid gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                onOpenChange(false)
-                // Defer add mode until the dialog unmounts to avoid mobile tap-through.
-                window.setTimeout(() => onChooseMapClick(), 0)
-              }}
-              className={cn(
-                'flex items-start gap-3 rounded-xl border border-border p-4 text-left transition-all',
-                'hover:border-primary/40 hover:bg-accent/50 cursor-pointer',
-              )}
-            >
-              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <MousePointerClick className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold">
-                  {t('addPlace.clickOnMap')}
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground leading-relaxed">
-                  {t('addPlace.clickOnMapHint')}
-                </span>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setStep('search')}
-              className={cn(
-                'flex items-start gap-3 rounded-xl border border-border p-4 text-left transition-all',
-                'hover:border-primary/40 hover:bg-accent/50 cursor-pointer',
-              )}
-            >
-              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Search className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold">{t('addPlace.search')}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground leading-relaxed">
-                  {t('addPlace.searchHint')}
-                </span>
-              </span>
-            </button>
+            {isMobile ? (
+              <>
+                <ChooserOption
+                  icon={<Search className="h-5 w-5" />}
+                  title={t('addPlace.search')}
+                  hint={t('addPlace.searchHint')}
+                  onClick={() => setStep('search')}
+                />
+                <ChooserOption
+                  icon={<MousePointerClick className="h-5 w-5" />}
+                  title={t('addPlace.clickOnMap')}
+                  hint={t('addPlace.clickOnMapHint')}
+                  onClick={() => {
+                    onOpenChange(false)
+                    window.setTimeout(() => onChooseMapClick(), 0)
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <ChooserOption
+                  icon={<MousePointerClick className="h-5 w-5" />}
+                  title={t('addPlace.clickOnMap')}
+                  hint={t('addPlace.clickOnMapHint')}
+                  onClick={() => {
+                    onOpenChange(false)
+                    window.setTimeout(() => onChooseMapClick(), 0)
+                  }}
+                />
+                <ChooserOption
+                  icon={<Search className="h-5 w-5" />}
+                  title={t('addPlace.search')}
+                  hint={t('addPlace.searchHint')}
+                  onClick={() => setStep('search')}
+                />
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-3 pt-1">
@@ -251,5 +247,38 @@ export function AddPlaceChooser({
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function ChooserOption({
+  icon,
+  title,
+  hint,
+  onClick,
+}: {
+  icon: ReactNode
+  title: string
+  hint: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-start gap-3 rounded-xl border border-border p-4 text-left transition-all',
+        'hover:border-primary/40 hover:bg-accent/50 cursor-pointer',
+      )}
+    >
+      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground leading-relaxed">
+          {hint}
+        </span>
+      </span>
+    </button>
   )
 }

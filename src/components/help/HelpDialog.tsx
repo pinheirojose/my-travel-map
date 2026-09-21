@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useIsMobile } from '@/hooks/usePlaces'
 import { useTranslation } from '@/hooks/useTranslation'
 
 interface HelpDialogProps {
@@ -8,6 +9,7 @@ interface HelpDialogProps {
 
 export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
 
   const shortcuts = [
     { keys: '⌘N', label: t('help.shortcutAdd') },
@@ -27,6 +29,12 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           <DialogDescription>{t('help.intro')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 text-sm">
+          {isMobile && (
+            <section>
+              <h3 className="font-semibold mb-1">{t('help.touchTitle')}</h3>
+              <p className="text-muted-foreground leading-relaxed">{t('help.touchBody')}</p>
+            </section>
+          )}
           <section>
             <h3 className="font-semibold mb-1">{t('help.addTitle')}</h3>
             <p className="text-muted-foreground leading-relaxed">{t('help.addBody')}</p>
@@ -43,19 +51,21 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             <h3 className="font-semibold mb-1">{t('help.languageTitle')}</h3>
             <p className="text-muted-foreground leading-relaxed">{t('help.languageBody')}</p>
           </section>
-          <section>
-            <h3 className="font-semibold mb-2">{t('help.shortcutsTitle')}</h3>
-            <ul className="space-y-1.5">
-              {shortcuts.map((item) => (
-                <li key={item.keys} className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <kbd className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded border border-border">
-                    {item.keys}
-                  </kbd>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {!isMobile && (
+            <section>
+              <h3 className="font-semibold mb-2">{t('help.shortcutsTitle')}</h3>
+              <ul className="space-y-1.5">
+                {shortcuts.map((item) => (
+                  <li key={item.keys} className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <kbd className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded border border-border">
+                      {item.keys}
+                    </kbd>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </DialogContent>
     </Dialog>
