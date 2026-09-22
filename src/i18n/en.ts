@@ -90,10 +90,6 @@ const en: Messages = {
       name: 'Minimal Black & White',
       description: 'Elegant monochrome style designed for framing.',
     },
-    watercolor: {
-      name: 'Watercolor',
-      description: 'Artistic watercolor effect with subtle textures.',
-    },
     dark_mode: {
       name: 'Dark Mode',
       description: 'Dark background with vibrant markers.',

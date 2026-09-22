@@ -20,6 +20,7 @@ import {
 } from '@/utils/constants'
 import { detectBrowserLocale } from '@/i18n'
 import { generateId } from '@/utils'
+import { isMapStyleId } from '@/utils/mapStyles'
 
 function systemPrefersDark(): boolean {
   if (typeof window === 'undefined') return false
@@ -386,6 +387,9 @@ export const useTravelMapStore = create<TravelMapStore>()(
               persistedPrefs?.locale ??
               current.preferences.locale ??
               detectBrowserLocale(),
+            selectedMapStyle: isMapStyleId(persistedPrefs?.selectedMapStyle)
+              ? persistedPrefs.selectedMapStyle
+              : current.preferences.selectedMapStyle,
             showVisited: persistedPrefs?.showVisited ?? true,
             showWishlist: persistedPrefs?.showWishlist ?? true,
             showCountryFill: persistedPrefs?.showCountryFill ?? true,
@@ -416,7 +420,9 @@ function pickImportedPreferences(
 ): Partial<AppPreferences> {
   const next: Partial<AppPreferences> = {}
   if (prefs.darkMode !== undefined) next.darkMode = prefs.darkMode
-  if (prefs.selectedMapStyle) next.selectedMapStyle = prefs.selectedMapStyle
+  if (isMapStyleId(prefs.selectedMapStyle)) {
+    next.selectedMapStyle = prefs.selectedMapStyle
+  }
   if (prefs.locale) next.locale = prefs.locale
   if (prefs.showVisited !== undefined) next.showVisited = prefs.showVisited
   if (prefs.showWishlist !== undefined) next.showWishlist = prefs.showWishlist

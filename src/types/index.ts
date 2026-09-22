@@ -71,7 +71,6 @@ export type SortOption = 'alphabetical' | 'recently_added' | 'visited_date'
 export type MapStyleId =
   | 'classic_atlas'
   | 'minimal_bw'
-  | 'watercolor'
   | 'dark_mode'
   | 'vintage_poster'
   | 'vintage_map'

@@ -39,24 +39,6 @@ export const MAP_STYLES: MapStyleDefinition[] = [
     markerWishlistColor: '#666666',
   },
   {
-    id: 'watercolor',
-    name: 'Watercolor',
-    emoji: '🎨',
-    description: 'Artistic watercolor effect with subtle textures.',
-    tileUrl: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg',
-    tileAttribution: '&copy; Stamen Design &copy; OpenStreetMap',
-    exportBackground: '#faf6f0',
-    exportTextColor: '#3d3428',
-    exportAccentColor: '#c4785a',
-    exportSecondaryColor: '#7a6b5a',
-    exportLegendBg: 'rgba(250, 246, 240, 0.92)',
-    exportTitleFont: '"Cormorant Garamond", "Palatino Linotype", Palatino, serif',
-    exportBodyFont: '"Inter", sans-serif',
-    markerVisitedColor: '#2d8a4e',
-    markerWishlistColor: '#4a7fb5',
-    decorative: true,
-  },
-  {
     id: 'dark_mode',
     name: 'Dark Mode',
     emoji: '🌑',
@@ -134,4 +116,8 @@ export const MAP_STYLES: MapStyleDefinition[] = [
 
 export function getMapStyle(id: string): MapStyleDefinition {
   return MAP_STYLES.find((s) => s.id === id) ?? MAP_STYLES[0]
+}
+
+export function isMapStyleId(id: unknown): id is MapStyleDefinition['id'] {
+  return MAP_STYLES.some((s) => s.id === id)
 }

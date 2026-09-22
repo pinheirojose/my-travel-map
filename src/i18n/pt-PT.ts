@@ -90,10 +90,6 @@ const ptPT: Messages = {
       name: 'Minimalista preto e branco',
       description: 'Estilo monocromático elegante, ideal para emoldurar.',
     },
-    watercolor: {
-      name: 'Aguarela',
-      description: 'Efeito artístico de aguarela com texturas subtis.',
-    },
     dark_mode: {
       name: 'Modo escuro',
       description: 'Fundo escuro com marcadores vibrantes.',

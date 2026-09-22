@@ -89,7 +89,6 @@ export type Messages = {
   mapStyles: {
     classic_atlas: { name: string; description: string }
     minimal_bw: { name: string; description: string }
-    watercolor: { name: string; description: string }
     dark_mode: { name: string; description: string }
     vintage_poster: { name: string; description: string }
     vintage_map: { name: string; description: string }
