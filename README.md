@@ -2,6 +2,8 @@
 
 A personal travel map. Mark places you have visited or want to visit, then download a high-resolution poster. Everything stays in this browser — export JSON so you do not lose it.
 
+Live site: [https://myworldmarked.vercel.app/](https://myworldmarked.vercel.app/)
+
 ## Features
 
 - **Add places** — Search a name, or choose Add Place → Click on map (plain map clicks do nothing until that mode is on)
