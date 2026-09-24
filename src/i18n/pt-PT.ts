@@ -2,7 +2,7 @@ import type { Messages } from './types'
 
 const ptPT: Messages = {
   app: {
-    name: 'Travel Map',
+    name: 'My World Marked',
     tagline: 'A sua viagem pessoal',
   },
   language: {
@@ -24,7 +24,7 @@ const ptPT: Messages = {
     import: 'Importar',
     importTooltip: 'Importar JSON',
     importHelp:
-      'Carregue locais a partir de um ficheiro JSON exportado do Travel Map. Pode substituir ou juntar à lista atual.',
+      'Carregue locais a partir de um ficheiro JSON exportado do My World Marked. Pode substituir ou juntar à lista atual.',
     reset: 'Repor tudo',
     darkMode: 'Modo escuro (⌘D)',
     lightMode: 'Modo claro (⌘D)',
@@ -133,14 +133,14 @@ const ptPT: Messages = {
     mapHintShort: 'Pesquise ou toque no mapa para adicionar um local.',
     cta: 'Adicionar o primeiro local',
     skip: 'Saltar',
-    dialogTitle: 'Bem-vindo ao Travel Map',
+    dialogTitle: 'Bem-vindo ao My World Marked',
     step1: 'Adicione um local pesquisando ou clicando no mapa.',
     step2: 'Marque-o como Visitado ou guarde-o na lista de desejos.',
     step3: 'Descarregue um cartaz em alta resolução quando quiser.',
   },
   help: {
     title: 'Ajuda',
-    intro: 'O Travel Map guarda tudo neste browser. Exporte JSON regularmente para não perder os seus locais.',
+    intro: 'O My World Marked guarda tudo neste browser. Exporte JSON regularmente para não perder os seus locais.',
     addTitle: 'Adicionar locais',
     addBody:
       'Use Adicionar local e depois pesquise um nome ou escolha Clicar no mapa. Os cliques no mapa só adicionam pins depois desse modo estar ativo.',
@@ -248,7 +248,7 @@ const ptPT: Messages = {
     cropWorld: 'Mundo inteiro',
     showTitle: 'Mostrar título',
     showStats: 'Mostrar estatísticas',
-    mapTitle: 'O Meu Mapa de Viagens',
+    mapTitle: 'My World Marked',
     legend: 'Legenda',
     summary: 'Resumo',
     totalPlaces: 'Total de locais',
@@ -260,9 +260,9 @@ const ptPT: Messages = {
     generated: 'Gerado a',
   },
   support: {
-    title: '❤️ Apoiar o Travel Map',
+    title: '❤️ Apoiar o My World Marked',
     message1:
-      'Se gosta de usar o Travel Map e quer ajudar a manter o projeto gratuito e em constante melhoria, considere apoiar o seu desenvolvimento.',
+      'Se gosta de usar o My World Marked e quer ajudar a manter o projeto gratuito e em constante melhoria, considere apoiar o seu desenvolvimento.',
     message2:
       'O seu contributo ajuda a financiar novas funcionalidades, melhorias no mapa e manutenção a longo prazo.',
     message3: 'Apoiar o projeto é totalmente opcional, mas muito apreciado.',

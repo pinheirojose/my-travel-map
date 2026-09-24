@@ -344,7 +344,7 @@ export interface ExportLabels {
 }
 
 const DEFAULT_EXPORT_LABELS: ExportLabels = {
-  mapTitle: 'My Travel Map',
+  mapTitle: 'My World Marked',
   legend: 'Legend',
   summary: 'Summary',
   visited: 'Visited',

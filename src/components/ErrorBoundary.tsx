@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Travel Map render error:', error, info)
+    console.error('My World Marked render error:', error, info)
   }
 
   render() {

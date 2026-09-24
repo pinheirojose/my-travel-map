@@ -2,7 +2,7 @@ import type { Messages } from './types'
 
 const en: Messages = {
   app: {
-    name: 'Travel Map',
+    name: 'My World Marked',
     tagline: 'Your personal journey',
   },
   language: {
@@ -24,7 +24,7 @@ const en: Messages = {
     import: 'Import',
     importTooltip: 'Import JSON',
     importHelp:
-      'Load places from a JSON file previously exported from Travel Map. You can replace or merge with your current list.',
+      'Load places from a JSON file previously exported from My World Marked. You can replace or merge with your current list.',
     reset: 'Reset All',
     darkMode: 'Dark Mode (⌘D)',
     lightMode: 'Light Mode (⌘D)',
@@ -133,14 +133,14 @@ const en: Messages = {
     mapHintShort: 'Search or tap the map to add a place.',
     cta: 'Add your first place',
     skip: 'Skip',
-    dialogTitle: 'Welcome to Travel Map',
+    dialogTitle: 'Welcome to My World Marked',
     step1: 'Add a place by searching or clicking the map.',
     step2: 'Mark it Visited or save it to your Wishlist.',
     step3: 'Download a high-resolution poster whenever you like.',
   },
   help: {
     title: 'Help',
-    intro: 'Travel Map stores everything in this browser. Export JSON regularly so you never lose your places.',
+    intro: 'My World Marked stores everything in this browser. Export JSON regularly so you never lose your places.',
     addTitle: 'Adding places',
     addBody:
       'Use Add Place, then search for a name or choose Click on map. Map clicks only add pins after that mode is on.',
@@ -248,7 +248,7 @@ const en: Messages = {
     cropWorld: 'Whole world',
     showTitle: 'Show title',
     showStats: 'Show stats',
-    mapTitle: 'My Travel Map',
+    mapTitle: 'My World Marked',
     legend: 'Legend',
     summary: 'Summary',
     totalPlaces: 'Total Places',
@@ -260,9 +260,9 @@ const en: Messages = {
     generated: 'Generated',
   },
   support: {
-    title: '❤️ Support Travel Map',
+    title: '❤️ Support My World Marked',
     message1:
-      'If you enjoy using Travel Map and would like to help keep the project free and continuously improving, consider supporting its development.',
+      'If you enjoy using My World Marked and would like to help keep the project free and continuously improving, consider supporting its development.',
     message2:
       'Your contribution helps fund new features, map improvements and long-term maintenance.',
     message3: 'Supporting the project is completely optional, but greatly appreciated.',
